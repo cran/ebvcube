@@ -35,7 +35,7 @@
 #' #set path to EBV netCDF
 #' file <- system.file(file.path("extdata","martins_comcom_id1_20220208_v1.nc"), package="ebvcube")
 #' #get all datacubepaths of EBV netCDF
-#' datacubes <- ebv_datacubepaths(file)
+#' datacubes <- ebv_datacubepaths(file, verbose=FALSE)
 #'
 #' #plot a map for the 3rd timestep, divide into 7 classes
 #' ebv_map(filepath = file, datacubepath = datacubes[1,1], entity = 1,
@@ -86,9 +86,6 @@ ebv_map <- function(filepath, datacubepath, entity=NULL, timestep=1, countries =
   if (!endsWith(filepath, '.nc')){
     stop(paste0('File ending is wrong. File cannot be processed.'))
   }
-
-  #file closed?
-  ebv_i_file_opened(filepath)
 
   #datacubepath check
   hdf <- rhdf5::H5Fopen(filepath, flags = "H5F_ACC_RDONLY")

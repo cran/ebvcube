@@ -48,7 +48,7 @@
 #' #define output path
 #' out <- file.path(system.file(package='ebvcube'),"extdata","changeRes.tif")
 #'
-#' \donttest{
+#' \dontrun{
 #' #resample using a netCDF file - return GeoTiff
 #' ebv_resample(filepath_src = file, datacubepath_src = datacubes[1,1],
 #'              entity_src=1, timestep_src = 1, resolution = res1,
@@ -112,9 +112,6 @@ ebv_resample <- function(filepath_src, datacubepath_src, entity_src=NULL, timest
     stop(paste0('File ending of filepath_src is wrong. File cannot be processed.'))
   }
 
-  #file closed?
-  ebv_i_file_opened(filepath_src)
-
   #check if res is given or filepath to destination
   if(checkmate::checkNumeric(resolution)==TRUE){
     if(checkmate::checkNumeric(resolution, len=3)==TRUE){
@@ -143,9 +140,6 @@ ebv_resample <- function(filepath_src, datacubepath_src, entity_src=NULL, timest
     if (!endsWith(filepath_dest, '.nc')){
       stop(paste0('File ending of filepath_dest is wrong. File cannot be processed.'))
     }
-
-    #file closed
-    ebv_i_file_opened(filepath_dest)
 
     #get properties
     prop_dest <- ebv_properties(filepath_dest, verbose=verbose)

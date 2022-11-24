@@ -60,7 +60,7 @@
 #' entities <- file.path(system.file(package='ebvcube'),"extdata","entities.csv")
 #'
 #' #create new EBV netCDF
-#' \donttest{
+#' \dontrun{
 #' ebv_create(jsonpath = json, outputpath = out, entities = entities,
 #'            fillvalue=-3.4E38)
 #' }
@@ -715,7 +715,7 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
   #keywords
   keywords <- paste0('ebv_class: ', json$ebv$ebv_class, ', ebv_name: ', json$ebv$ebv_name,
                      ', ebv_domain: ', paste0(json$ebv_domain[[1]], collapse=', '), ', ebv_spatial_scope: ',
-                     json$ebv_spatial$ebv_spatial_scope, ', ebv_entity_type: ',
+                     json$ebv_geospatial$ebv_geospatial_scope, ', ebv_entity_type: ',
                      json$ebv_entity$ebv_entity_type)
 
   if(scenarios_no > 0){
@@ -738,6 +738,9 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
   for (i in 1:length(global.att)){
     att.txt <- eval(parse(text = paste0('json$', global.att[i][[1]])))
     att.txt <- paste0(trimws(att.txt), collapse = ', ')
+    if(names(global.att[i])=='contributor_name'){
+      att.txt <- paste0(trimws(trimws(stringr::str_split(att.txt,',')[[1]])), collapse = ', ')
+    }
     ebv_i_char_att(hdf, names(global.att[i]), att.txt)
   }
 

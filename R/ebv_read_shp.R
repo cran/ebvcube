@@ -34,7 +34,7 @@
 #' #set path to EBV netCDF
 #' file <- system.file(file.path("extdata","martins_comcom_id1_20220208_v1.nc"), package="ebvcube")
 #' #get all datacubepaths of EBV netCDF
-#' datacubes <- ebv_datacubepaths(file)
+#' datacubes <- ebv_datacubepaths(file, verbose=FALSE)
 #'
 #' #set path to shp file
 #' shp_path <- system.file(file.path("extdata","subset_germany.shp"), package="ebvcube")
@@ -43,7 +43,7 @@
 #' #read subset - return Raster
 #' cSAR.germany <- ebv_read_shp(filepath = file, datacubepath = datacubes[1,1],
 #'                              entity = 1, timestep = 1, shp = shp_path,
-#'                              outputpath = NULL)
+#'                              outputpath = NULL, ignore_RAM = TRUE)
 #' }
 ebv_read_shp <- function(filepath, datacubepath, entity=NULL, timestep = 1,
                          shp, outputpath=NULL, touches = TRUE, overwrite=FALSE,
@@ -107,7 +107,7 @@ ebv_read_shp <- function(filepath, datacubepath, entity=NULL, timestep = 1,
   }
 
   #file closed?
-  ebv_i_file_opened(filepath)
+  ebv_i_file_opened(filepath, verbose)
 
   #variable check
   if (checkmate::checkCharacter(datacubepath) != TRUE){

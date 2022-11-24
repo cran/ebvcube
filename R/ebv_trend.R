@@ -40,7 +40,7 @@
 #' #set path to EBV netCDF
 #' file <- system.file(file.path("extdata","martins_comcom_id1_20220208_v1.nc"), package="ebvcube")
 #' #get all datacubepaths of EBV netCDF
-#' datacubes <- ebv_datacubepaths(file)
+#' datacubes <- ebv_datacubepaths(file, verbose=FALSE)
 #'
 #' \donttest{
 #' #plot the change of the mean over time of the first datacube
@@ -80,9 +80,6 @@ ebv_trend <- function(filepath, datacubepath, entity=NULL, method='mean',
   if (!endsWith(filepath, '.nc')){
     stop(paste0('File ending is wrong. File cannot be processed.'))
   }
-
-  #file closed?
-  ebv_i_file_opened(filepath)
 
   #datacubepath check
   hdf <- rhdf5::H5Fopen(filepath, flags = "H5F_ACC_RDONLY")

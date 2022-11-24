@@ -61,13 +61,13 @@ For working with the DelayedMatrix take a look at
 #set path to EBV netCDF
 file <- system.file(file.path("extdata","martins_comcom_id1_20220208_v1.nc"), package="ebvcube")
 #get all datacubepaths of EBV netCDF
-datacubes <- ebv_datacubepaths(file)
+datacubes <- ebv_datacubepaths(file, verbose=FALSE)
 
 \donttest{
 #read data as DelayedArray
 cSAR.delayedarray <- ebv_read(filepath = file, datacubepath = datacubes[1,1],
                               entity = 1, timestep = c(1,3), type='da',
-                              sparse=TRUE)
+                              sparse = TRUE)
 #read data as Raster
 cSAR.raster <- ebv_read(filepath = file, datacubepath = datacubes[1,1],
                              entity = 1, timestep = 1:3, type='r')

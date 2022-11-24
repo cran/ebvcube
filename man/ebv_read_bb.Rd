@@ -65,7 +65,7 @@ returned based on the epsg of the netCDF Dataset.
 #set path to EBV netCDF
 file <- system.file(file.path("extdata","martins_comcom_id1_20220208_v1.nc"), package="ebvcube")
 #get all datacubepaths of EBV netCDF
-datacubes <- ebv_datacubepaths(file)
+datacubes <- ebv_datacubepaths(file, verbose=FALSE)
 
 #set outputpath
 out <- file.path(system.file(package='ebvcube'),"extdata","subset_bb.tif")
@@ -78,7 +78,7 @@ bb_utm32 <- c(271985, 941837, 5232640, 6101151)
 cSAR.germany <- ebv_read_bb(filepath = file, datacubepath = datacubes[1,1],
                              entity = 1, timestep = 1:3, bb = bb_wgs84)
 
-\donttest{
+\dontrun{
 #read bb (based on EPSG 4326) - write to GeoTiff
 path <- ebv_read_bb(filepath = file, datacubepath = datacubes[1,1],
                     entity = 1, timestep = 1, bb = bb_wgs84,

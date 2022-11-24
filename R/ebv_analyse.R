@@ -36,7 +36,7 @@
 #' #set path to EBV netCDF
 #' file <- system.file(file.path("extdata","martins_comcom_id1_20220208_v1.nc"), package="ebvcube")
 #' #get all datacubepaths of EBV netCDF
-#' datacubes <- ebv_datacubepaths(file)
+#' datacubes <- ebv_datacubepaths(file, verbose=FALSE)
 #' #set path to shp file
 #' shp_path <- system.file(file.path("extdata","subset_germany.shp"), package="ebvcube")
 #'
@@ -88,9 +88,6 @@ ebv_analyse <- function(filepath, datacubepath, entity=NULL, timestep=1,
   if (!endsWith(filepath, '.nc')){
     stop(paste0('File ending is wrong. File cannot be processed.'))
   }
-
-  #file closed?
-  ebv_i_file_opened(filepath)
 
   #variable check
   if (checkmate::checkCharacter(datacubepath) != TRUE){
