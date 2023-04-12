@@ -4,6 +4,10 @@
 # ebvcube package
 
 <!-- badges: start -->
+
+[![CRAN
+status](https://www.r-pkg.org/badges/version/ebvcube)](https://CRAN.R-project.org/package=ebvcube)
+[![R-CMD-check](https://github.com/LuiseQuoss/ebvcube/actions/workflows/R-CMD-check.yaml/badge.svg?branch=dev)](https://github.com/LuiseQuoss/ebvcube/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 This package can be used to easily access the data of the EBV netCDFs
@@ -31,12 +35,12 @@ The structure allows several datacubes per netCDF file. These cubes have
 four dimensions: longitude, latitude, time and entity, whereby the last
 dimension can, e.g., encompass different species or groups of species,
 ecosystem types or other. The usage of hierarchical groups enables the
-coexistence of multiple EBV cubes. The first level (netCDF group) are
-scenarios, e.g., the modelling for different Shared Socioeconomic
-Pathways (SSP) scenarios. The second level (netCDF group) are metrics,
-e.g., the percentage of protected area per pixel and its proportional
-loss over a certain time span per pixel. All metrics are repeated per
-scenario, if any are present.
+coexistence of multiple data cubes. All cubes share the same dimensions.
+The first level (netCDF group) are scenarios, e.g., the modelling for
+different Shared Socioeconomic Pathways (SSP) scenarios. The second
+level (netCDF group) are metrics, e.g., the percentage of protected area
+per pixel and its proportional loss over a certain time span per pixel.
+All metrics are repeated per scenario, if any are present.
 
 ``` bash
 ├── scenario_1
@@ -56,6 +60,10 @@ datacubes are 4D.
 You can install the ebvcube packages with:
 
 ``` r
+#get the current version on CRAN
+install.packages('ebvcube') 
+
+#install the latest version from GitHub
 devtools::install_github('https://github.com/LuiseQuoss/ebvcube')
 ```
 
@@ -84,22 +92,27 @@ Sys.getenv("GDAL_DRIVER_PATH")
 
 ## 3. Working with the package - a quick intro
 
+The example data set used in this README is a spatial subset (African
+continent) of the [Local bird diversity
+(cSAR/BES-SIM)](https://portal.geobon.org/ebv-detail?id=1) data set by
+Ines Martins.
+
 ### 3.1 Take a very first look at the file
 
-With the following two functions you get the core information about the
-data of a specific EBV netCDF. First we take a look at some basic
-metadata of that file. The properties encompass much more information!
+With the following two functions you get the metadata of a specific EBV
+netCDF file. First we take a look at some basic metadata of that file.
+The properties encompass much more information!
 
 ``` r
 library(ebvcube)
 
 #set the path to the file
-file <- system.file(file.path("extdata","martins_comcom_id1_20220208_v1.nc"), package="ebvcube")
+file <- system.file(file.path("extdata","martins_comcom_subset.nc"), package="ebvcube")
 
 #read the properties of the file
 prop.file <- ebv_properties(file)
 
-#take a look at the general properties of the dataset - there are more properties to discover!
+#take a look at the general properties of the data set - there are more properties to discover!
 prop.file@general[1:4]
 #> $title
 #> [1] "Local bird diversity (cSAR/BES-SIM)"
@@ -117,7 +130,7 @@ slotNames(prop.file)
 ```
 
 Now let’s get the paths to all possible datacubes. The resulting
-dataframe includes the paths and also descriptions of the metric and/or
+data.frame includes the paths and also descriptions of the metric and/or
 scenario and/or entity. The paths basically consist of the nested
 structure of scenario, metric and the datacube.
 
@@ -134,48 +147,28 @@ fyi: the result also holds the general file properties from above.
 
 ``` r
 prop.dc <- ebv_properties(file, datacubes[1,1])
-prop.dc@ebv_cube
-#> $units
-#> [1] "Percentage points"
+prop.dc@metric
+#> $name
+#> [1] "Relative change in the number of species (%)"
 #> 
-#> $coverage_content_type
-#> [1] "modelResult"
-#> 
-#> $fillvalue
-#> [1] -3.4e+38
-#> 
-#> $type
-#> [1] "H5T_IEEE_F32LE"
+#> $description
+#> [1] "Relative change in the number of species (S) using the year 1900 as reference (e.g. -50 corresponds to a decrease in 50% of the number of species in the cell since 1900, (S_year-S_1900)/S_1900*100)"
 ```
 
 ### 3.2 Plot the data to get a better impression
 
 To discover the spatial distribution of the data, you can plot a map of
 the datacube that we just looked at. It has 12 timesteps. Here we look
-at the sixth one.
+at the first one.
 
 ``` r
 #plot the global map
-dc <- datacubes[1,1]
-ebv_map(file, dc, entity=1, timestep = 1)
+dc <- datacubes[2,1]
+ebv_map(file, dc, entity=1, timestep = 1, classes = 9, 
+        verbose=FALSE, col_rev = T)
 ```
 
 <img src="man/figures/README-unnamed-chunk-5-1.png" width="100%" />
-
-``` r
-
-# What was the data about again? Check the properties!
-prop.dc@general$title
-#> [1] "Local bird diversity (cSAR/BES-SIM)"
-# And the datacube?
-prop.dc@metric$name
-#> [1] "Relative change in the number of species (%)"
-prop.dc@general$entity_names[1]
-#> [1] "all birds"
-#What timestep?
-prop.dc@temporal$timesteps_natural[1]
-#> [1] "1900-01-01"
-```
 
 It’s nice to see the global distribution, but how is the change of that
 datacube (non forest birds) over time? Let’s take a look at the average.
@@ -192,7 +185,8 @@ averages <- ebv_trend(file, dc, entity=1)
 
 ``` r
 averages
-#> [1] 0.3302859 0.6599264 0.9860116
+#>  [1]  0.6140731  1.2972444  2.2045310  3.6016083  6.4691830  8.8957375
+#>  [7]  9.7711291 10.3299345 10.9822654 11.5685090 11.9421034 12.3869482
 ```
 
 It would be cool to have that for other indicators as well? Check out
@@ -209,40 +203,42 @@ measurements <- ebv_analyse(file, dc, entity=1)
 #see the included measurements
 names(measurements)
 #> [1] "min"  "q25"  "q50"  "mean" "q75"  "max"  "std"  "n"    "NAs"
-#how many pixels are included?
-measurements$n
-#> [1] 64800
+#check out the mean and the number of pixels
 measurements$mean
-#> [1] 0.3302859
+#> [1] 0.6140731
+measurements$n
+#> [1] 7650
 
-#info for a subset defined by a bounding box (roughly(!) Germany)
-bb <- c(5,15,47,55)
-measurements.bb <- ebv_analyse(file, dc, entity = 1, subset = bb)
-#how many pixels are now included?
-measurements.bb$n
-#> [1] 80
+#info for a subset defined by a bounding box
+#you can also define the subset by a Shapefile - check it out!
+bb <- c(-26, 64, 30, 38)
+measurements.bb <- ebv_analyse(file,dc, entity = 1, subset = bb)
+#check out the mean of the subset
 measurements.bb$mean
-#> [1] -0.8185277
+#> [1] 0.3241093
+measurements.bb$n
+#> [1] 720
 ```
 
-To access the data you can use the following:
+To access the first three timesteps of the data you can use the
+following:
 
 ``` r
 #load whole data as array for two timesteps
-data <- ebv_read(file, dc, entity = 1, timestep = c(1,2), type = 'a')
+data <- ebv_read(file, dc, entity = 1, timestep = 1:3, type = 'a')
 dim(data)
-#> [1] 180 360   2
+#> [1] 85 90  3
 ```
 
-To subset the data using a shapefile you need to indicate a directory
+To subset the data using a Shapefile you need to indicate a directory
 for temporarily created files.
 
 ``` r
 #load subset from shapefile (Germany)
-shp <- system.file(file.path('extdata','subset_germany.shp'), package="ebvcube")
+shp <- system.file(file.path('extdata','cameroon.shp'), package="ebvcube")
 data.shp <- ebv_read_shp(file, dc, entity=1, shp = shp, timestep = c(1,2,3))
 dim(data.shp)
-#> [1]  9 11  3
+#> [1] 12  9  3
 #very quick plot of the resulting raster plus the shapefile
 borders <- terra::vect(shp)
 ggplot2::ggplot() +
@@ -254,9 +250,9 @@ ggplot2::ggplot() +
 
 <img src="man/figures/README-unnamed-chunk-9-1.png" width="100%" />
 Imagine you have a very large dataset but only limited memory. The
-package provides the possibility to load the data as a DelayedArray. A
-second function helps you to write that data back on disk properly. Look
-into the manual to obtain more information.
+package provides the possibility to load the data as a DelayedArray. The
+ebv_write() function helps you to write that data back on disk properly.
+Look into the manual to obtain more information.
 
 ### 3.4 Take a peek on the creation of an EBV netCDF
 
@@ -266,10 +262,10 @@ First of all, you have to insert all the metadata in the [EBV Data
 Portal](https://portal.geobon.org/home) and then use the resulting text
 file (json format) to create an empty netCDF which complies to the EBV
 netCDF structure, i.e., it has the correct structure mapped to your data
-and holds the metadata. Additionally to that (json) text file the
-function needs a list of all entities the netCDF (csv list, see help
-page for detailed information) will encompass and geospatial information
-such as the coordinate reference system.
+and holds the metadata. Additionally to that (json) text file, the
+function needs a list of all entities the netCDF (see help page for
+detailed information) will encompass and geospatial information such as
+the coordinate reference system.
 
 The example is based on the [Local bird diversity
 (cSAR/BES-SIM)](https://portal.geobon.org/ebv-detail?id=1).
@@ -278,13 +274,13 @@ The example is based on the [Local bird diversity
 #paths
 json <- system.file(file.path('extdata','metadata.json'), package="ebvcube")
 newNc <- file.path(system.file(package="ebvcube"),'extdata','test.nc')
-entities <- file.path(system.file(package='ebvcube'),"extdata","entities.csv")
+entities <- c('forest bird species','non-forest bird species','all bird species')
 #defining the fillvalue - optional
 fv <- -3.4e+38
 #create the netCDF
 ebv_create(jsonpath = json, outputpath = newNc, entities = entities, 
            epsg = 4326, extent = c(-180, 180, -90, 90), resolution = c(1, 1),
-           fillvalue = fv, prec='float', force_4D = TRUE, overwrite=T, verbose=FALSE)
+           fillvalue = fv, overwrite=T, verbose=FALSE)
 
 #needless to say: check the properties of your newly created file to see if you get what you want
 #especially the entity_names from the slot general should be checked to see if your csv was formatted the right way
@@ -332,10 +328,10 @@ Ups! So you did a mistake and want to change the attribute?! No problem.
 Just use the upcoming function to change it.
 
 ``` r
-ebv_attribute(newNc, attribute_name='units', value='percentage', levelpath=dc.new[1,1])
+ebv_attribute(newNc, attribute_name='units', value='Percentage', levelpath=dc.new[1,1])
 #check the properties one more time - perfect!
 print(ebv_properties(newNc, dc.new[1,1])@ebv_cube$units)
-#> [1] "percentage"
+#> [1] "Percentage"
 ```
 
 In this case the levelpath corresponds to the datacube path. But you can
@@ -352,7 +348,7 @@ citation('ebvcube')
 #>   Quoss L, Fernandez N, Langer C, Valdez J, Pereira H (2021). _ebvcube:
 #>   Working with netCDF for Essential Biodiversity Variables_. German
 #>   Centre for Integrative Biodiversity Research (iDiv)
-#>   Halle-Jena-Leipzig, Germany. R package version 0.1.1,
+#>   Halle-Jena-Leipzig, Germany. R package version 0.1.3,
 #>   <https://github.com/LuiseQuoss/ebvcube>.
 #> 
 #> Ein BibTeX-Eintrag für LaTeX-Benutzer ist
@@ -361,7 +357,7 @@ citation('ebvcube')
 #>     title = {ebvcube: Working with netCDF for Essential Biodiversity Variables},
 #>     author = {Luise Quoss and Nestor Fernandez and Christian Langer and Jose Valdez and Henrique Miguel Pereira},
 #>     year = {2021},
-#>     note = {R package version 0.1.1},
+#>     note = {R package version 0.1.3},
 #>     organization = {German Centre for Integrative Biodiversity Research (iDiv) Halle-Jena-Leipzig},
 #>     address = {Germany},
 #>     url = {https://github.com/LuiseQuoss/ebvcube},
@@ -370,18 +366,18 @@ citation('ebvcube')
 
 ## List of all functions
 
-| Functionality      | Function          | Description                                    |
-|:-------------------|:------------------|:-----------------------------------------------|
-| Basic access       | ebv_datacubepaths | Returns all available data cubes in the netCDF |
-|                    | ebv_properties    | Collects all the metadata terms of the netCDF  |
-|                    | ebv_download      | Downloads EBV netCDFs from the EBV Portal      |
-| Data access        | ebv_read          | Reads the data                                 |
-|                    | ebv_read_bb       | Reads a spatial subset given by a bounding box |
-|                    | ebv_read_shp      | Reads a spatial subset given by a Shapefile    |
-|                    | ebv_analyse       | Returns basic measurements of the data         |
-|                    | ebv_write         | Writes manipulated data back to disc           |
-| Data visualization | ebv_map           | Plots a map of the specified data slice        |
-|                    | ebv_trend         | Plots the temporal trend                       |
-| Data creation      | ebv_create        | Creates a new EBV netCDF                       |
-|                    | ebv_add_data      | Adds data to the new netCDF                    |
-|                    | ebv_attribute     | Changes attribute values                       |
+| Functionality      | Function          | Description                                   |
+|:-------------------|:------------------|:----------------------------------------------|
+| Basic access       | ebv_datacubepaths | Get all available data cubes in the netCDF    |
+|                    | ebv_properties    | Get all the metadata of the netCDF            |
+|                    | ebv_download      | Download EBV netCDFs from the EBV Portal      |
+| Data access        | ebv_read          | Read the data                                 |
+|                    | ebv_read_bb       | Read a spatial subset given by a bounding box |
+|                    | ebv_read_shp      | Read a spatial subset given by a Shapefile    |
+|                    | ebv_analyse       | Get basic measurements of the data            |
+|                    | ebv_write         | Write manipulated data back to disc           |
+| Data visualization | ebv_map           | Plot a map of the specified data slice        |
+|                    | ebv_trend         | Plot the temporal trend                       |
+| Data creation      | ebv_create        | Create a new EBV netCDF                       |
+|                    | ebv_add_data      | Add data to the new netCDF                    |
+|                    | ebv_attribute     | Change an attribute value                     |

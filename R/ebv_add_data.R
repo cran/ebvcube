@@ -41,7 +41,7 @@
 #'
 #' @examples
 #' #set path to EBV netCDF
-#' file <- system.file(file.path("extdata","martins_comcom_id1_20220208_v1.nc"), package="ebvcube")
+#' file <- system.file(file.path("extdata","test.nc"), package="ebvcube")
 #' #get all datacubepaths of EBV netCDF
 #' datacubepaths <- ebv_datacubepaths(file, verbose=FALSE)
 #' #set path to GeoTiff with data
@@ -109,7 +109,7 @@ ebv_add_data <- function(filepath_nc, datacubepath,entity=NULL, timestep=1,
   character <- FALSE
   matrix <- FALSE
   array <- FALSE
-  if(checkmate::test_character(data)){
+  if(checkmate::test_character(data) & !any(class(data) == 'matrix')){
     character <- TRUE
     #check if tif file exists
     if (checkmate::checkFileExists(data) != TRUE){
@@ -150,7 +150,7 @@ ebv_add_data <- function(filepath_nc, datacubepath,entity=NULL, timestep=1,
   rhdf5::H5Fclose(hdf)
 
   # get properties
-  prop <- ebv_properties(filepath_nc, datacubepath)
+  prop <- ebv_properties(filepath_nc, datacubepath, verbose=F)
   fillvalue <- prop@ebv_cube$fillvalue
   dims <- prop@spatial$dimensions
   entity_names <- prop@general$entity_names

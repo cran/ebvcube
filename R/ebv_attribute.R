@@ -26,22 +26,23 @@
 #'   change the ebv_class first. Don't forget to change the ebv_name accordingly!
 #'
 #' @examples
-#' #set path to EBV netCDF
-#' file <- system.file(file.path("extdata","martins_comcom_id1_20220208_v1.nc"), package="ebvcube")
+#' #set path to EBV netCDF file <-
+#' system.file(file.path("extdata","baisero_spepop_id5_20220405_v1_empty.nc"),
+#' package="ebvcube")
 #'
 #' \dontrun{
 #' try({
 #' #change the standard_name of the metric
 #' attribute1 <- 'standard_name'
-#' value1 <- 'Relative change in the number of species (%)'
-#' level1 <- 'metric_1'
+#' value1 <- 'habitat availability'
+#' level1 <- 'scenario_1/metric_1'
 #' ebv_attribute(filepath = file, attribute_name = attribute1,
 #'               value = value1, level = level1)
 #'
 #' #change the units of the ebv_cube
 #' attribute2 <- 'units'
-#' value2 <- 'mean'
-#' level2 <- 'metric_1/ebv_cube' #equal to the datacubepath
+#' value2 <- 'Land-use of 5,090 mammals calculated in sqkm'
+#' level2 <- 'scenario_1/metric_1/ebv_cube' #equal to the datacubepath
 #' ebv_attribute(filepath = file, attribute_name = attribute2,
 #'               value = value2, level = level2)
 #'
@@ -103,6 +104,9 @@ ebv_attribute <- function(filepath, attribute_name, value,
 
   #file closed?
   ebv_i_file_opened(filepath, verbose)
+
+  #get datacubes
+  datacubes <- ebv_datacubepaths(filepath, verbose=verbose)
 
   #open file
   hdf <- rhdf5::H5Fopen(filepath)
@@ -289,7 +293,6 @@ ebv_attribute <- function(filepath, attribute_name, value,
       rhdf5::H5Gclose(h5obj)
     }
     #get all scenarios----
-    datacubes <- ebv_datacubepaths(filepath, verbose=verbose)
     parts <- unique(unlist(stringr::str_split(datacubes[,1], '/')))
     index <- which(stringr::str_detect(parts, 'scenario'))
     scenarios <- parts[index]

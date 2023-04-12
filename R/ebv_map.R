@@ -13,10 +13,11 @@
 #' @param timestep Integer. Choose one timestep.
 #' @param countries Logical. Default: TRUE. Simple country outlines will be
 #'   plotted on top of the raster data. Disable by setting this option to FALSE.
-#' @param col_rev Logical. Default: FALSE Set to TRUE if you want the color
-#'   ramp to be the other way around.
+#' @param col_rev Logical. Default: FALSE Set to TRUE if you want the color ramp
+#'   to be the other way around.
 #' @param classes Integer. Default: 5. Define the amount of classes (quantiles)
-#'   for the symbology. Currently restricted to maximum 15 classes.
+#'   for the symbology. Currently restricted to maximum 11 classes (allowed
+#'   maximum for palette RdYlBu is 11).
 #' @param all_data Logical. Default: FALSE. The quantiles are based on the one
 #'   timestep you chose (default). If you want include the full data of the
 #'   datacube to produce several maps that are based on the same color scale,
@@ -33,7 +34,7 @@
 #' @examples
 #' \donttest{
 #' #set path to EBV netCDF
-#' file <- system.file(file.path("extdata","martins_comcom_id1_20220208_v1.nc"), package="ebvcube")
+#' file <- system.file(file.path("extdata","martins_comcom_subset.nc"), package="ebvcube")
 #' #get all datacubepaths of EBV netCDF
 #' datacubes <- ebv_datacubepaths(file, verbose=FALSE)
 #'
@@ -115,8 +116,8 @@ ebv_map <- function(filepath, datacubepath, entity=NULL, timestep=1, countries =
   if (checkmate::checkInt(classes)!=TRUE){
     stop('The argument classes must be of type "single integerish value"')
   }
-  if (checkmate::checkInt(classes, upper=15)!=TRUE){
-    stop('The value of classes is too big. It is limitated to 15.')
+  if (checkmate::checkInt(classes, upper=11)!=TRUE){
+    stop('The value of classes is too big. It is limitated to 11.')
   }
 
   #check logical arguments
@@ -138,7 +139,9 @@ ebv_map <- function(filepath, datacubepath, entity=NULL, timestep=1, countries =
   title <- prop@general$title
   epsg <- prop@spatial$epsg
   units <- prop@ebv_cube$units
-  timestep.nat <- prop@temporal$timesteps_natural[timestep]
+  timestep.nat <- prop@temporal$dates[timestep]
+  nodata <- prop@ebv_cube$fillvalue
+  metric_name <- prop@metric$name
 
   #check file structure
   is_4D <- ebv_i_4D(filepath)
@@ -166,7 +169,7 @@ ebv_map <- function(filepath, datacubepath, entity=NULL, timestep=1, countries =
     label <- prop@ebv_cube$standard_name
   }
 
-  subtitle <- paste0(label, ' (', timestep.nat,')')
+  subtitle <- paste0(metric_name, ' - ', label, ' (', timestep.nat,')')
 
   #read the data necessary for the quantiles----
   data.all <- HDF5Array::HDF5Array(filepath = filepath, name = datacubepath,
@@ -180,6 +183,9 @@ ebv_map <- function(filepath, datacubepath, entity=NULL, timestep=1, countries =
       data.all <- data.all[,,timestep]
     }
   }
+
+  #replace nodata value
+  data.all[data.all==nodata] <- NA
 
   #get the raster for plotting----
   #in case the raster is too big for memory -> resample and plot at lower resolution
@@ -239,10 +245,25 @@ ebv_map <- function(filepath, datacubepath, entity=NULL, timestep=1, countries =
   s <- stats::quantile(data.all, probs = seq(0, 1, (1/classes)), na.rm=TRUE)
 
   #check if quantile list values are unique
-  if(length(unique(s)) != (classes+1)){
-    message('Error while creating quantiles. Color Scale will be corrupted.
-            Most likely you will see less classes than you defined.')
+  if(length(unique(s)) != (classes+1) & classes!=1){
+    message('Color Scale will be corrupted. Most likely you will see less classes than you defined.')
     s <- unique(s)
+    if(length(s)==1){
+      rast_value = as.numeric(s[length(s)])
+      legend_lab <- as.numeric(s[length(s)])
+    }
+  } else if (classes==1){
+    if(s[1]!=s[2]){
+      s <- signif(max(data.all, na.rm=T),4)
+      data.raster[!is.na(data.raster)] <- 1
+      min_val <- signif(min(data.all, na.rm=T),4)
+      max_val <- signif(max(data.all, na.rm=T),4)
+      legend_lab <- paste0(min_val, ' - ', max_val)
+      rast_value <- 1
+    }else{
+      rast_value = as.numeric(s[length(s)])
+      legend_lab <- as.numeric(s[length(s)])
+    }
   }
 
   #get reverses color----
@@ -271,7 +292,30 @@ ebv_map <- function(filepath, datacubepath, entity=NULL, timestep=1, countries =
   }
 
 
-  #define display options ----
+  #define color options ----
+  if(classes==1 | length(s)==1){
+    data.raster = terra::as.factor(data.raster)
+    levels(data.raster) <- data.frame(value=rast_value, desc=c('aquamarine4'))
+    color_def = ggplot2::scale_fill_manual(paste(strwrap(units,width = 10), collapse = "\n"),
+                                           values = c('aquamarine4'), label= legend_lab,
+                                           na.value=NA, na.translate = F
+                                           )
+
+
+  }else{
+    color_def <- ggplot2::scale_fill_fermenter(na.value=NA, palette = palette, breaks =  as.numeric(s),
+                                              label = signif(as.numeric(s),3),
+                                              direction = direction,
+                                              guide=ggplot2::guide_bins(title=paste(strwrap(
+                                                                          units,
+                                                                          width = 10
+                                                                        ), collapse = "\n"),
+                                                                        #even.steps = FALSE,
+                                                                        #show.limits = TRUE,
+                                                                        reverse=!col_rev,
+                                                                        axis=F
+                                              ))
+  }
 
   #plot with country outlines ----
   if (countries){
@@ -297,18 +341,7 @@ ebv_map <- function(filepath, datacubepath, entity=NULL, timestep=1, countries =
                              ), collapse = "\n"),
                          subtitle = subtitle) +
         ggplot2::theme_classic() +
-        ggplot2::scale_fill_fermenter(na.value=NA, palette = palette, breaks =  as.numeric(s),
-                                      label = round(as.numeric(s),2),
-                                      direction = direction,
-                                      guide=ggplot2::guide_bins(title=units,
-                                                                #even.steps = FALSE,
-                                                                show.limits = TRUE,
-                                                                reverse=!col_rev,
-                                                                axis=F
-                                      )
-                                      # guide = ggplot2::guide_coloursteps(even.steps = FALSE
-                                      #                                    ),
-                                      )+
+        color_def +
         ggplot2::ylab(ylab) +
         ggplot2::xlab(xlab)
     )
@@ -325,18 +358,7 @@ ebv_map <- function(filepath, datacubepath, entity=NULL, timestep=1, countries =
                            ), collapse = "\n"),
                          subtitle = subtitle) +
         ggplot2::theme_classic() +
-        ggplot2::scale_fill_fermenter(na.value=NA, palette = palette, breaks =  as.numeric(s),
-                                      label = round(as.numeric(s),2),
-                                      direction = direction,
-                                      guide=ggplot2::guide_bins(title=units,
-                                                                #even.steps = FALSE,
-                                                                show.limits = TRUE,
-                                                                reverse=!col_rev,
-                                                                axis=F
-                                      )
-                                      # guide = ggplot2::guide_coloursteps(even.steps = FALSE
-                                      #                                    ),
-        )+
+        color_def +
         ggplot2::ylab(ylab) +
         ggplot2::xlab(xlab)
     )

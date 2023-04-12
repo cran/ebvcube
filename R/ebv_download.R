@@ -15,7 +15,8 @@
 #' @param verbose Logical. Default: TRUE. Turn off additional prints by setting
 #'   it to FALSE.
 #'
-#' @return Downloades a netCDF and json file to the given output directory.
+#' @return Downloads a netCDF and json file (metadata) to the given output
+#'   directory.
 #' @export
 #'
 #' @examples
@@ -27,7 +28,10 @@
 #' tempdir(), overwrite=TRUE,
 #' verbose=FALSE)
 #' }
-ebv_download <- function(id=NULL, outputdir, overwrite=FALSE, verbose=TRUE){
+ebv_download <- function(id=NULL,
+                         outputdir,
+                         overwrite=FALSE,
+                         verbose=TRUE){
 
   #start initial tests----
   #check for internet connection
@@ -42,6 +46,9 @@ ebv_download <- function(id=NULL, outputdir, overwrite=FALSE, verbose=TRUE){
       internet <- FALSE
     }
   })
+  if(is.null(internet)){
+    internet <- FALSE
+  }
 
   if(internet!=TRUE){
     stop('It seems that you are not connected to the internet and therefore cannot download any files. Please check your connection. If you are sure you are connected, it could also be that https://portal.geobon.org is down. Check in your browser.')

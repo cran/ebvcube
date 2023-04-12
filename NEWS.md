@@ -1,3 +1,18 @@
+# ebvcube 0.1.3
+## Major changes
+- ebv_trend: alter trend-plot (dashed-lines, subtitle)
+- ebv_map: correct the display of binary maps
+- ebv_create: implemented paleo and irregular dates netCDFs (terranova)
+- ebv_create: correct typo: coordinates instead of coordinate for entity coordinate
+- ebv_properties: remove backwards compatibility to old standard (before ACDD)
+- replaced h5ls by h5dump to make ebv_properties and ebv_datacubepaths faster
+- ebv_properties: rename 'timesteps_natural' to 'dates' (changes across functions)
+
+## Bug fixes
+- ebv_create: contributor_name, content coverage type and domain corrected (comma + white space)
+- ebv_i_file_opened: solve error on MAC OS (CRAN)
+- ebv_i_eval_epsg: suppress warning by terra when assigning a crs (test error). [#23](https://github.com/LuiseQuoss/ebvcube/issues/23) by Roger Bivand
+
 # ebvcube 0.1.2
 ## Major changes
 - implement CRAN feedback (ebv_i_file_opened (lsof to fuser), examples and test (writing to user library))

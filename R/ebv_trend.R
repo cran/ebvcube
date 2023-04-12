@@ -38,7 +38,7 @@
 #'
 #' @examples
 #' #set path to EBV netCDF
-#' file <- system.file(file.path("extdata","martins_comcom_id1_20220208_v1.nc"), package="ebvcube")
+#' file <- system.file(file.path("extdata","martins_comcom_subset.nc"), package="ebvcube")
 #' #get all datacubepaths of EBV netCDF
 #' datacubes <- ebv_datacubepaths(file, verbose=FALSE)
 #'
@@ -138,7 +138,7 @@ ebv_trend <- function(filepath, datacubepath, entity=NULL, method='mean',
 
   # basic attributes ----
   time <- prop@spatial$dimensions[3]
-  timevalues <- prop@temporal$timesteps_natural
+  timevalues <- prop@temporal$dates
   #derive years
   if(grepl('^P\\d{4}-?\\d{0,2}-?\\d{0,2}$', prop@temporal$resolution)){
     if(stringr::str_split(prop@temporal$resolution, '-')[[1]][2]=='00' &
@@ -151,6 +151,7 @@ ebv_trend <- function(filepath, datacubepath, entity=NULL, method='mean',
   type.short <- ebv_i_type_r(prop@ebv_cube$type)
   dims <- prop@spatial$dimensions
   units <- prop@ebv_cube$units
+  metric_name <- prop@metric$name
 
   #label
   ls <- rhdf5::h5ls(filepath)
@@ -171,6 +172,8 @@ ebv_trend <- function(filepath, datacubepath, entity=NULL, method='mean',
     label <- prop@ebv_cube$standard_name
     entity_index <- 1
   }
+
+  label <- paste0(metric_name, ' - ', label)
 
   #1. check subset or not -> get data accordingly
   #2. check method
@@ -284,7 +287,7 @@ ebv_trend <- function(filepath, datacubepath, entity=NULL, method='mean',
       dt <- as.data.frame(values)
       dt <- cbind(dt, timevalues)
 
-      print(ggplot2::ggplot(data=dt, ggplot2::aes(x=timevalues, y=values))+
+      print(ggplot2::ggplot(data=dt, ggplot2::aes(x=timevalues, y=values, group=1))+
         ggplot2::geom_point(color=color, shape=20, size=2) +
         ggplot2::xlab('time') +
         ggplot2::ggtitle(paste(strwrap(
@@ -294,6 +297,7 @@ ebv_trend <- function(filepath, datacubepath, entity=NULL, method='mean',
         ggplot2::labs(subtitle=label)+
         ggplot2::ylab(paste0(method, '\n(',units,')')) +
         ggplot2::theme_classic() +
+        ggplot2::geom_line(linetype = "dashed", color=color) +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle=90)) +
         {if(length(timevalues)>15){
           ggplot2::scale_x_discrete(breaks=timevalues[seq(1, length(timevalues), 5)])
@@ -323,7 +327,7 @@ ebv_trend <- function(filepath, datacubepath, entity=NULL, method='mean',
       colnames(dataset) <- 'V1'
 
       #return(dataset)
-      ggp <- ggplot2::ggplot(data = dataset, ggplot2::aes(x=factor(timevalues), y=dataset$V1,)) +
+      ggp <- ggplot2::ggplot(data = dataset, ggplot2::aes(x=factor(timevalues), y='V1',)) +
         ggplot2::geom_boxplot(fill=color, outlier.size = 0.7, outlier.shape = 20) +
         ggplot2::ylab(units) +
         ggplot2::xlab('Time') +
