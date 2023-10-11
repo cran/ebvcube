@@ -1,12 +1,12 @@
 #' Create an EBV netCDF
 #'
 #' @description Create the core structure of the EBV netCDF based on the json
-#'   from the \href{https://portal.geobon.org/api-docs}{Geobon Portal API}. Data
-#'   will be added afterwards. Use [ebvcube::ebv_add_data()] to add the missing
-#'   data.
+#'   from the \href{https://portal.geobon.org}{EBV Data Portal}. Data will be
+#'   added afterwards using [ebvcube::ebv_add_data()].
 #'
-#' @param jsonpath Character. Path to the json file downloaded from the
-#'   \href{https://portal.geobon.org/api-docs}{Geobon Portal API}.
+#' @param jsonpath Character. Path to the json file downloaded from the EBV Data
+#'   Portal. Login to the page and click on 'Uploads' and 'New Upload' to start
+#'   the process.
 #' @param outputpath Character. Set path where the netCDF file should be
 #'   created.
 #' @param entities Character string or vector of character strings. In case of
@@ -216,7 +216,7 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
     #read csv---
     # check if data inside
     tryCatch({
-      entity_csv <- suppressWarnings(utils::read.csv(entities, sep=sep, header=F, fileEncoding="UTF-8-BOM"))
+      entity_csv <- suppressWarnings(utils::read.csv(entities, sep=sep, header=F, fileEncoding="UTF-8"))
     },
     error=function(e){
       if(stringr::str_detect(as.character(e), 'no lines available')){
@@ -591,7 +591,7 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
     temp <- file.path(temp_path, 'ebv_chunksize_3d_test.nc')
     test_def <- ncdf4::ncvar_def(name = 'test_var', units = 'some units',
                                  dim= list(lon_dim, lat_dim, time_dim),
-                                 compression=9, prec=prec,
+                                 compression=5, prec=prec,
                                  verbose=F, shuffle=shuffle)
     nc_test <- ncdf4::nc_create(filename = temp,
                            vars = test_def,
@@ -619,7 +619,7 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
         name <- paste0('var', enum)
         assign(name, ncdf4::ncvar_def(name = var, units = units[metric.digit],
                                       dim= list(lon_dim, lat_dim, time_dim),
-                                      missval=fillvalue, compression=9,
+                                      missval=fillvalue, compression=5,
                                       prec=prec, verbose=verbose, shuffle=shuffle
                                       ))
         var_list_nc[[enum]] <- eval(parse(text=name))
@@ -632,7 +632,7 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
         name <- paste0('var', enum)
         assign(name, ncdf4::ncvar_def(name = var, units = units[metric.digit],
                                       dim= list(lon_dim, lat_dim, time_dim),
-                                      compression=9, prec=prec,
+                                      compression=5, prec=prec,
                                       verbose=verbose, shuffle=shuffle
                                       ))
         var_list_nc[[enum]] <- eval(parse(text=name))
@@ -648,7 +648,7 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
         name <- paste0('var', enum)
         assign(name, ncdf4::ncvar_def(name = var, units = as.character(units[metric.digit]),
                                       dim= list(lon_dim, lat_dim, time_dim, entity_dim),
-                                      missval=fillvalue, compression=9, prec=prec,
+                                      missval=fillvalue, compression=5, prec=prec,
                                       verbose=verbose, shuffle=shuffle,
                                       chunksizes=chunksizes_new))
         var_list_nc[[enum]] <- eval(parse(text=name))
@@ -661,7 +661,7 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
         name <- paste0('var', enum)
         assign(name, ncdf4::ncvar_def(name = var, units = as.character(units[metric.digit]),
                                       dim= list(lon_dim, lat_dim, time_dim, entity_dim),
-                                      compression=9, prec=prec,
+                                      compression=5, prec=prec,
                                       verbose=verbose, shuffle=shuffle,
                                       chunksizes=chunksizes_new))
         var_list_nc[[enum]] <- eval(parse(text=name))
@@ -982,6 +982,7 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
     }
     entity.values <- c(entity.values, new_values)
   }
+  entity.values <- enc2utf8(entity.values)
   entity.id <- rhdf5::H5Dopen(hdf, 'entity')#HERE
   rhdf5::H5Dwrite(entity.id, entity.values)
 

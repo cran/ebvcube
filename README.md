@@ -230,8 +230,7 @@ dim(data)
 #> [1] 85 90  3
 ```
 
-To subset the data using a Shapefile you need to indicate a directory
-for temporarily created files.
+You can also get a spatial subset of the data by providing a Shapefile.
 
 ``` r
 #load subset from shapefile (Cameroon)
@@ -345,19 +344,19 @@ citation('ebvcube')
 #> 
 #> To cite ebvcube in publications use:
 #> 
-#>   Quoss L, Fernandez N, Langer C, Valdez J, Pereira H (2021). _ebvcube:
+#>   Quoss L, Fernandez N, Langer C, Valdez J, Pereira H (2023). _ebvcube:
 #>   Working with netCDF for Essential Biodiversity Variables_. German
 #>   Centre for Integrative Biodiversity Research (iDiv)
-#>   Halle-Jena-Leipzig, Germany. R package version 0.1.4,
+#>   Halle-Jena-Leipzig, Germany. R package version 0.1.5,
 #>   <https://github.com/LuiseQuoss/ebvcube>.
 #> 
-#> Ein BibTeX-Eintrag für LaTeX-Benutzer ist
+#> A BibTeX entry for LaTeX users is
 #> 
 #>   @Manual{,
 #>     title = {ebvcube: Working with netCDF for Essential Biodiversity Variables},
 #>     author = {Luise Quoss and Nestor Fernandez and Christian Langer and Jose Valdez and Henrique Miguel Pereira},
-#>     year = {2021},
-#>     note = {R package version 0.1.4},
+#>     year = {2023},
+#>     note = {R package version 0.1.5},
 #>     organization = {German Centre for Integrative Biodiversity Research (iDiv) Halle-Jena-Leipzig},
 #>     address = {Germany},
 #>     url = {https://github.com/LuiseQuoss/ebvcube},

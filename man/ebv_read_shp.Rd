@@ -33,12 +33,12 @@ netCDFs.}
 \item{shp}{Character. Path to the shapefile defining the subset. Ending needs
 to be *.shp.}
 
-\item{outputpath}{Character. Default: NULL, returns the data as a raster
+\item{outputpath}{Character. Default: NULL, returns the data as a SpatRaster
 object in memory. Optional: set path to write subset as GeoTiff on disk.}
 
-\item{touches}{Logical. Default: TRUE, all pixels touched by the polygon(s) will
-be updated. Set to FALSE to only include pixels that are on the line render
-path or have center points inside the polygon(s).}
+\item{touches}{Logical. Default: TRUE, all pixels touched by the polygon(s)
+will be updated. Set to FALSE to only include pixels that are on the line
+render path or have center points inside the polygon(s).}
 
 \item{overwrite}{Logical. Default: FALSE. Set to TRUE to overwrite the
 outputfile defined by 'outputpath'.}
@@ -50,8 +50,8 @@ your memory to read the data. Can be switched off (set to TRUE).}
 it to FALSE.}
 }
 \value{
-Returns a raster object if no outputpath is given. Otherwise the
-subset is written onto the disk and the ouputpath is returned.
+Returns a SpatRaster object if no output path is given. Otherwise the
+subset is written onto the disk and the ouput path is returned.
 }
 \description{
 Read a subset of one or more layers from one datacube of the
@@ -67,7 +67,7 @@ datacubes <- ebv_datacubepaths(file, verbose=FALSE)
 shp_path <- system.file(file.path("extdata","cameroon.shp"), package="ebvcube")
 
 \donttest{
-#read subset - return Raster
+#read subset - return SpatRaster
 cSAR_cameroon <- ebv_read_shp(filepath = file, datacubepath = datacubes[1,1],
                              entity = 1, timestep = 1, shp = shp_path,
                              outputpath = NULL, ignore_RAM = TRUE)

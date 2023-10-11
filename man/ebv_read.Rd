@@ -9,7 +9,7 @@ ebv_read(
   datacubepath,
   entity = NULL,
   timestep = 1,
-  type = "a",
+  type = "r",
   sparse = FALSE,
   ignore_RAM = FALSE,
   verbose = FALSE
@@ -30,8 +30,8 @@ netCDFs.}
 
 \item{type}{Character. Choose between 'a', 'r' and 'da'. The first returns an
 array or matrix object. The 'r' indicates that a SpatRaster object from the
-terra package will be returned. The latter ('da') returns a DelayedArray or
-DelayedMatrix object.}
+terra package will be returned (default). The latter ('da') returns a
+DelayedArray or DelayedMatrix object.}
 
 \item{sparse}{Logical. Default: FALSE. Set to TRUE if the data contains a lot
 empty raster cells. Only relevant for DelayedArray return value.}
@@ -68,7 +68,7 @@ datacubes <- ebv_datacubepaths(file, verbose=FALSE)
 cSAR.delayedarray <- ebv_read(filepath = file, datacubepath = datacubes[1,1],
                               entity = 1, timestep = c(1,3), type='da',
                               sparse = TRUE)
-#read data as Raster
+#read data as SpatRaster
 cSAR.raster <- ebv_read(filepath = file, datacubepath = datacubes[1,1],
                              entity = 1, timestep = 1:3, type='r')
 #read data as Array

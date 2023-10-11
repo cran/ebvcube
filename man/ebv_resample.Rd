@@ -41,14 +41,15 @@ c(0.25, 0.25, 4326).}
 \item{outputpath}{Character. Set path to write data as GeoTiff on disk.}
 
 \item{method}{Character. Default: bilinear. Define resampling method. Choose
-from: "near","bilinear","cubic" and "cubicspline". For categorical data,
-use 'near'. Based on \code{\link[terra:project]{terra::project()}}.}
+from: "near","bilinear","cubic", "cubicspline", "lanczos", "sum", "min",
+"q1", "med", "q3", "max", "average", "mode" and "rms". For categorical
+data, use 'near'. Based on \code{\link[terra:project]{terra::project()}}.}
 
 \item{return_raster}{Logical. Default: FALSE. Set to TRUE to directly get the
-corresponding SpatRast object.}
+corresponding SpatRaster object.}
 
-\item{overwrite}{Logical. Default: FALSE. Set to TRUE to overwrite the
-output file defined by 'outputpath'.}
+\item{overwrite}{Logical. Default: FALSE. Set to TRUE to overwrite the output
+file defined by 'outputpath'.}
 
 \item{ignore_RAM}{Logical. Default: FALSE. Checks if there is enough space in
 your memory to read the data. Can be switched off (set to TRUE).}
@@ -57,8 +58,8 @@ your memory to read the data. Can be switched off (set to TRUE).}
 it to FALSE.}
 }
 \value{
-Default: returns the outputpath of the GeoTiff with the new
-resolution. Optional: return the raster object with the new resolution.
+Default: returns the output path of the GeoTiff with the new
+resolution. Optional: return the SpatRaster object with the new resolution.
 }
 \description{
 Change the resolution of one datacube of a EBV netCDF based on
@@ -79,7 +80,7 @@ res2 <- c(0.5,0.5,4326)
 out <- file.path(system.file(package='ebvcube'),"extdata","changeRes.tif")
 
 \dontrun{
-#resample defining the resolution and EPSG code by hand - return Raster
+#resample defining the resolution and EPSG code by hand - return SpatRaster
 data_raster <- ebv_resample(filepath_src = file, datacubepath_src = datacubes[1,1],
                             entity_src=1, timestep_src = 1, resolution = res2,
                             outputpath = out, method='near', return_raster=TRUE,
