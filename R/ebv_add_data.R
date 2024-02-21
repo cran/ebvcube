@@ -1,7 +1,7 @@
-#' Add data to a self-created EBV netCDF
+#' Add data to your EBV netCDF
 #'
-#' @description Add data to the self-created EBV netCDF from GeoTiffs. First,
-#'   create a new EBV netCDF using [ebvcube::ebv_create()].
+#' @description Add data to your EBV netCDF from GeoTiffs or in-memory arrays.
+#'   First, create a new EBV netCDF using [ebvcube::ebv_create()].
 #'
 #' @param filepath_nc Character. Path to the self-created netCDF file.
 #' @param data Character or matrix or array. If character: Path to the GeoTiff
@@ -131,7 +131,7 @@ ebv_add_data <- function(filepath_nc, datacubepath,entity=NULL, timestep=1,
   }
 
   #file closed?
-  ebv_i_file_opened(filepath_nc, verbose)
+  # ebv_i_file_opened(filepath_nc, verbose)
 
   #already rotate data for tests etc.
   if(matrix & !array){
@@ -150,7 +150,7 @@ ebv_add_data <- function(filepath_nc, datacubepath,entity=NULL, timestep=1,
   }
   if(!is.null(datacubepath)){
     if (rhdf5::H5Lexists(hdf, datacubepath)==FALSE | !stringr::str_detect(datacubepath, 'ebv_cube')){
-      stop(paste0('The given variable is not valid:\n', datacubepath))
+      stop(paste0('The given datacubepath is not valid:\n', datacubepath))
     }
   }
   rhdf5::H5Fclose(hdf)
@@ -314,6 +314,10 @@ ebv_add_data <- function(filepath_nc, datacubepath,entity=NULL, timestep=1,
     rhdf5::H5Dclose(did)
     rhdf5::H5Sclose(file_space)
   }
+
+
+  #think about replacing NaN with NA -> weird errors -> check again if this bug is real!
+  data[is.nan(data)] <- NA
 
   #write data ----
 

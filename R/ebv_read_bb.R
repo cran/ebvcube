@@ -46,11 +46,11 @@
 #' bb_utm32 <- c(-2383703, 5532302, 3643854, 4564646)
 #'
 #'
+#' \dontrun{
 #' #read bb (based on EPSG 4326) - return SpatRaster
 #' cSAR_subset <- ebv_read_bb(filepath = file, datacubepath = datacubes[1,1],
 #'                              entity = 1, timestep = 1:3, bb = bb_wgs84)
 #'
-#' \dontrun{
 #' #read bb (based on EPSG 4326) - write to GeoTiff
 #' path <- ebv_read_bb(filepath = file, datacubepath = datacubes[1,1],
 #'                     entity = 1, timestep = 1, bb = bb_wgs84,
@@ -109,7 +109,7 @@ ebv_read_bb <- function(filepath, datacubepath, entity=NULL, timestep = 1, bb,
   }
 
   #file closed?
-  ebv_i_file_opened(filepath, verbose)
+  # ebv_i_file_opened(filepath, verbose)
 
   #variable check
   if (checkmate::checkCharacter(datacubepath) != TRUE){
@@ -117,7 +117,7 @@ ebv_read_bb <- function(filepath, datacubepath, entity=NULL, timestep = 1, bb,
   }
   hdf <- rhdf5::H5Fopen(filepath, flags = "H5F_ACC_RDONLY")
   if (rhdf5::H5Lexists(hdf, datacubepath)==FALSE | !stringr::str_detect(datacubepath, 'ebv_cube')){
-    stop(paste0('The given variable is not valid:\n', datacubepath))
+    stop(paste0('The given datacubepath is not valid:\n', datacubepath))
   }
   rhdf5::H5Fclose(hdf)
 
