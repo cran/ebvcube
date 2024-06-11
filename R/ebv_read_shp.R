@@ -4,8 +4,9 @@
 #'   netCDF file. Subset definition by a shapefile.
 #'
 #' @param filepath Character. Path to the netCDF file.
-#' @param datacubepath Character. Path to the datacube (use
-#'   [ebvcube::ebv_datacubepaths()]).
+#' @param datacubepath Character. Optional. Default: NULL. Path to the datacube
+#'   (use [ebvcube::ebv_datacubepaths()]). Alternatively, you can use the
+#'   scenario and metric argument to define which cube you want to access.
 #' @param entity Character or Integer. Default is NULL. If the structure is 3D,
 #'   the entity argument is set to NULL. Else, a character string or single
 #'   integer value must indicate the entity of the 4D structure of the EBV
@@ -14,10 +15,23 @@
 #'   to be *.shp.
 #' @param outputpath Character. Default: NULL, returns the data as a SpatRaster
 #'   object in memory. Optional: set path to write subset as GeoTiff on disk.
-#' @param timestep Integer. Choose one or several timesteps (vector).
+#' @param timestep Integer or character. Select one or several timestep(s).
+#'   Either provide an integer value or list of values that refer(s) to the
+#'   index of the timestep(s) (minimum value: 1) or provide a date or list of
+#'   dates in ISO format, such as '2015-01-01'.
 #' @param touches Logical. Default: TRUE, all pixels touched by the polygon(s)
 #'   will be updated. Set to FALSE to only include pixels that are on the line
 #'   render path or have center points inside the polygon(s).
+#' @param scenario Character or integer. Optional. Default: NULL. Define the
+#'   scenario you want to access. If the EBV netCDF has no scenarios, leave the
+#'   default value (NULL). You can use an integer value defining the scenario or
+#'   give the name of the scenario as a character string. To check the available
+#'   scenarios and their name or number (integer), use
+#'   [ebvcube::ebv_datacubepaths()].
+#' @param metric Character or integer. Optional. Define the metric you want to
+#'   access. You can use an integer value defining the metric or give the name
+#'   of the scenario as a character string. To check the available metrics and
+#'   their name or number (integer), use [ebvcube::ebv_datacubepaths()].
 #' @param overwrite Logical. Default: FALSE. Set to TRUE to overwrite the
 #'   outputfile defined by 'outputpath'.
 #' @param ignore_RAM Logical. Default: FALSE. Checks if there is enough space in
@@ -45,9 +59,10 @@
 #'                              entity = 1, timestep = 1, shp = shp_path,
 #'                              outputpath = NULL, ignore_RAM = TRUE)
 #' }
-ebv_read_shp <- function(filepath, datacubepath, entity=NULL, timestep = 1,
-                         shp, outputpath=NULL, touches = TRUE, overwrite=FALSE,
-                         ignore_RAM=FALSE, verbose = TRUE){
+ebv_read_shp <- function(filepath, datacubepath = NULL, entity = NULL,
+                         timestep = 1, shp, outputpath=NULL, touches = TRUE,
+                         scenario = NULL, metric = NULL,
+                         overwrite=FALSE, ignore_RAM=FALSE, verbose = TRUE){
   ####start initial checks ----
   # ensure file and all datahandles are closed on exit
   withr::defer(
@@ -60,27 +75,23 @@ ebv_read_shp <- function(filepath, datacubepath, entity=NULL, timestep = 1,
   if(missing(filepath)){
     stop('Filepath argument is missing.')
   }
-  if(missing(datacubepath)){
-    stop('Datacubepath argument is missing.')
-  }
-  #are all arguments given?
   if(missing(shp)){
     stop('Shapefile (shp) argument for subsetting is missing.')
   }
 
   #check verbose
-  if(checkmate::checkLogical(verbose, len=1, any.missing=F) != TRUE){
+  if(checkmate::checkLogical(verbose, len=1, any.missing=FALSE) != TRUE){
     stop('Verbose must be of type logical.')
   }
 
   #check logical arguments
-  if(checkmate::checkLogical(ignore_RAM, len=1, any.missing=F) != TRUE){
+  if(checkmate::checkLogical(ignore_RAM, len=1, any.missing=FALSE) != TRUE){
     stop('ignore_RAM must be of type logical.')
   }
-  if(checkmate::checkLogical(overwrite, len=1, any.missing=F) != TRUE){
+  if(checkmate::checkLogical(overwrite, len=1, any.missing=FALSE) != TRUE){
     stop('overwrite must be of type logical.')
   }
-  if(checkmate::checkLogical(touches, len=1, any.missing=F) != TRUE){
+  if(checkmate::checkLogical(touches, len=1, any.missing=FALSE) != TRUE){
     stop('touches must be of type logical.')
   }
 
@@ -109,31 +120,37 @@ ebv_read_shp <- function(filepath, datacubepath, entity=NULL, timestep = 1,
   #file closed?
   # ebv_i_file_opened(filepath, verbose)
 
-  #variable check
-  if (checkmate::checkCharacter(datacubepath) != TRUE){
-    stop('Datacubepath must be of type character.')
+  #datacubepath check
+  #1. make sure anything is defined
+  if(is.null(datacubepath) && is.null(scenario) && is.null(metric)){
+    stop('You need to define the datacubepath or the scenario and metric.
+       Regarding the second option: If your EBV netCDF has no scenario,
+       leave the argument empty.')
+  }else if(!is.null(datacubepath)){
+    #2. check datacubepath
+    # open file
+    hdf <- rhdf5::H5Fopen(filepath, flags = "H5F_ACC_RDONLY")
+    if (checkmate::checkCharacter(datacubepath) != TRUE) {
+      stop('Datacubepath must be of type character.')
+    }
+    if (rhdf5::H5Lexists(hdf, datacubepath) == FALSE ||
+        !stringr::str_detect(datacubepath, 'ebv_cube')) {
+      stop(paste0('The given datacubepath is not valid:\n', datacubepath))
+    }
+    #close file
+    rhdf5::H5Fclose(hdf)
+  } else if(!is.null(metric)){
+    #3. check metric&scenario
+    datacubepaths <- ebv_datacubepaths(filepath, verbose=verbose)
+    datacubepath <- ebv_i_datacubepath(scenario, metric,
+                                       datacubepaths, verbose=verbose)
   }
-  hdf <- rhdf5::H5Fopen(filepath, flags = "H5F_ACC_RDONLY")
-  if (rhdf5::H5Lexists(hdf, datacubepath)==FALSE | !stringr::str_detect(datacubepath, 'ebv_cube')){
-    stop(paste0('The given datacubepath is not valid:\n', datacubepath))
-  }
-  rhdf5::H5Fclose(hdf)
 
   #get properties
-  prop <- ebv_properties(filepath, datacubepath, verbose)
+  prop <- ebv_properties(filepath, datacubepath, verbose = verbose)
 
-  #timestep check
-  #check if timestep is valid type
-  if(checkmate::checkIntegerish(timestep) != TRUE){
-    stop('Timestep has to be an integer or a list of integers.')
-  }
-
-  #check timestep range
-  max_time <- prop@spatial$dimensions[3]
-  min_time <- 1
-  if(checkmate::checkIntegerish(timestep, lower=min_time, upper=max_time) != TRUE){
-    stop(paste0('Chosen timestep ', paste(timestep, collapse = ' '), ' is out of bounds. Timestep range is ', min_time, ' to ', max_time, '.'))
-  }
+  #timestep check -> in case of ISO, get index
+  timestep <- ebv_i_date(timestep, prop@temporal$dates)
 
   #outputpath check
   if (!is.null(outputpath)){
@@ -164,14 +181,6 @@ ebv_read_shp <- function(filepath, datacubepath, entity=NULL, timestep = 1,
     entity_names <- prop@general$entity_names
     ebv_i_entity(entity, entity_names)
 
-    #get entity index
-    if(checkmate::checkIntegerish(entity, len=1) == TRUE){
-      entity_index <- entity
-    } else if (checkmate::checkCharacter(entity)==TRUE){
-      entity_index <- which(entity_names==entity)
-    } else{
-      entity <- 1 #set entity to 1 (for ebv_i_check_ram)
-    }
   }
 
   ####end initial checks ----
@@ -199,9 +208,6 @@ ebv_read_shp <- function(filepath, datacubepath, entity=NULL, timestep = 1,
   epsg.nc <- as.integer(prop@spatial$epsg)
   crs.nc <- prop@spatial$wkt2
 
-  #original extent
-  extent.org <- terra::ext(subset)
-
   #reproject shp if necessary to epsg of ncdf ----
   if (epsg.shp != epsg.nc){
     subset <- terra::project(subset, crs.nc)
@@ -210,19 +216,10 @@ ebv_read_shp <- function(filepath, datacubepath, entity=NULL, timestep = 1,
   #get extent of shp
   extent.shp <- terra::ext(subset)
 
-  #get extent of ncdf file
-  ext <- prop@spatial$extent
-
   #get subset of ncdf #checks for RAM
   subset.nc <- ebv_read_bb(filepath, datacubepath, entity=entity,
                            bb=c(extent.shp[1], extent.shp[2], extent.shp[3], extent.shp[4]),
                            timestep=timestep, epsg=epsg.nc, ignore_RAM = ignore_RAM, verbose=verbose)
-
-  #get extent of raster
-  extent.raster <- terra::ext(subset.nc)
-
-  #get resolution of ncdf
-  resolution.nc <- terra::res(subset.nc)
 
   #rasterize shp ----
   #with resoultion of ncdf, burn value 1 (temp.raster --> mask)

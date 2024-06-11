@@ -5,24 +5,24 @@
 #'   (netCDF) and its metadata (json file) will be downloaded to the given
 #'   output directory.
 #'
-#' @param id Integer or Character. There are three option to identify the datase
-#'   to be downloaded. (1) It can be a single integer value representing the ID
-#'   of the dataset. (2) It can be a character string representing the title of
-#'   the data set. (3) It can be a character string representing the DOI of the
-#'   dataset in the format '10.25829/f2rdp4' (Dataset 'Habitat availability for
-#'   African great apes' by Jessica Junker from the EBV Data Portal). All three
-#'   identifier can be retrieved by running [ebvcube::ebv_download()] without
-#'   any arguments which returns a data.frame of all available data sets and
-#'   their title, ID and DOI.
+#' @param id Integer or Character. There are three option to identify the
+#'   dataset to be downloaded. (1) It can be a single integer value representing
+#'   the ID of the dataset. (2) It can be a character string representing the
+#'   title of the data set. (3) It can be a character string representing the
+#'   DOI of the dataset in the format '10.25829/f2rdp4' (Dataset 'Habitat
+#'   availability for African great apes' by Jessica Junker from the EBV Data
+#'   Portal). All three identifier can be retrieved by running
+#'   [ebvcube::ebv_download()] without any arguments which returns a data.frame
+#'   of all available data sets and their ID, title and DOI.
 #' @param outputdir Character. Output directory of the downloaded files.
 #' @param overwrite Logical. Default: FALSE. Set to TRUE if you want to
 #'   overwrite the netCDF and json.
 #' @param verbose Logical. Default: TRUE. Turn off additional prints by setting
 #'   it to FALSE.
 #'
-#' @return Downloads a netCDF and json file (metadata) to the given output
+#' @return Downloads a netCDF and json file (ACDD metadata) to the given output
 #'   directory. If run empty returns a data.frame of all available data sets and
-#'   their title, ID and DOI.
+#'   their ID, title and DOI.
 #' @export
 #'
 #' @examples
@@ -47,8 +47,8 @@ ebv_download <- function(id=NULL,
 
   #check if portal website can be reached
   con <- url('https://portal.geobon.org') #, 'rb'
-  check <- suppressWarnings(try(open.connection(con,open="rt",timeout=t),silent=T)[1])
-  suppressWarnings(try(close.connection(con),silent=T))
+  check <- suppressWarnings(try(open.connection(con,open="rt"),silent=TRUE)[1])
+  suppressWarnings(try(close.connection(con),silent=TRUE))
   website <- ifelse(is.null(check),TRUE,FALSE)
 
   if(website!=TRUE){
@@ -56,7 +56,7 @@ ebv_download <- function(id=NULL,
   }
 
   #check verbose
-  if(checkmate::checkLogical(verbose, len=1, any.missing=F) != TRUE){
+  if(checkmate::checkLogical(verbose, len=1, any.missing=FALSE) != TRUE){
     stop('Verbose must be of type logical.')
   }
 
@@ -106,8 +106,8 @@ ebv_download <- function(id=NULL,
 
         #check if this website is available
         con_doi <- url(url_id)
-        check_doi <- suppressWarnings(try(open.connection(con_doi,open="rt",timeout=t),silent=T)[1])
-        suppressWarnings(try(close.connection(con_doi),silent=T))
+        check_doi <- suppressWarnings(try(open.connection(con_doi,open="rt",timeout=t),silent=TRUE)[1])
+        suppressWarnings(try(close.connection(con_doi),silent=TRUE))
         website_doi <- ifelse(is.null(check_doi),TRUE,FALSE)
 
         if(website_doi!=TRUE){
@@ -118,7 +118,7 @@ ebv_download <- function(id=NULL,
         a <- httr::HEAD(url_id)
         path_portal <- (a$all_headers[[1]])$headers$location
         #check if redirect to portal website
-        if(!grepl('portal.geobon.org/ebv-detail?id=', path_portal, fixed=T)){
+        if(!grepl('portal.geobon.org/ebv-detail?id=', path_portal, fixed=TRUE)){
           #stop if DOI is not pointing to EBV Data Portal
           stop('The DOI you have entered does not point to a dataset from the EBV Data Portal and therefore cannot be downloaded.')
         }else{
@@ -162,7 +162,7 @@ ebv_download <- function(id=NULL,
     name_nc <- basename(nc_path)
 
     #check if netCDF file already exists
-    if(file.exists(file.path(outputdir, name_nc)) & overwrite==FALSE ){
+    if(file.exists(file.path(outputdir, name_nc)) && overwrite==FALSE){
       if(verbose){
         print('NetCDF already downloaded to this directory. Set overwrite to TRUE to replace the older file')
       }

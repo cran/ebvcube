@@ -1,74 +1,91 @@
-#' Create an EBV netCDF
+#'Create an EBV netCDF with taxonomy
 #'
-#' @description Create the core structure of the EBV netCDF based on the json
-#'   from the \href{https://portal.geobon.org}{EBV Data Portal}. Data will be
-#'   added afterwards using [ebvcube::ebv_add_data()].
+#'@description Create the core structure of the EBV netCDF based on the json
+#'  from the \href{https://portal.geobon.org}{EBV Data Portal}. Additionally,
+#'  you can add the hierarchy of the taxonomy. This is not provided in the
+#'  [ebvcube::ebv_create()] function. Use the [ebvcube::ebv_create()] function
+#'  if your dataset holds no taxonomic information. Data will be added
+#'  afterwards using [ebvcube::ebv_add_data()].
 #'
-#' @param jsonpath Character. Path to the json file downloaded from the EBV Data
-#'   Portal. Login to the page and click on 'Uploads' and 'New Upload' to start
-#'   the process.
-#' @param outputpath Character. Set path where the netCDF file should be
-#'   created.
-#' @param entities Character string or vector of character strings. In case of
-#'   single character string: Path to the csv table holding the entity names.
-#'   Default: comma-separated delimiter, else change the `sep` argument
-#'   accordingly. Should have only one column, each row is the name of one
-#'   entity. In case of vector of character strings: Vector holding the entity
-#'   names.
-#' @param epsg Integer. Default: 4326 (WGS84). Defines the coordinate reference
-#'   system via the corresponding epsg code.
-#' @param extent Numeric. Default: c(-180,180,-90,90). Defines the extent of the
-#'   data: c(xmin, xmax, ymin, ymax).
-#' @param fillvalue Numeric. Value of the missing data in the array. Not
-#'   mandatory but should be defined!
-#' @param prec Character. Default: 'double'. Precision of the data set. Valid
-#'   options: 'short' 'integer' 'float' 'double' 'char' 'byte'.
-#' @param sep Character. Default: ','. If the delimiter of the csv specifying
-#'   the entity-names differs from the default, indicate here.
-#' @param overwrite Logical. Default: FALSE. Set to TRUE to overwrite the output
-#'   file defined by 'outputpath'.
-#' @param verbose Logical. Default: TRUE. Turn off additional prints by setting
-#'   it to FALSE.
-#' @param resolution Numerical. Vector of two numerical values defining the
-#'   longitudinal and latitudinal resolution of the pixel: c(lon,lat).
-#' @param timesteps Character. Vector of the timesteps in the dataset. Default:
-#'   NULL - in this case the time will be calculated from the start-, endpoint
-#'   and temporal resolution given in the metadata file (json). Else, the dates
-#'   must be given in in ISO format 'YYYY-MM-DD' or shortened 'YYYY' in case of
-#'   yearly timesteps.
-#' @param force_4D Logical. Default is TRUE. If the argument is TRUE, there will
-#'   be 4D cubes (lon, lat, time, entity) per metric. If this argument is
-#'   changed to FALSE, there will be 3D cubes (lon, lat, time) per entity (per
-#'   metric). So the latter yields a higher amount of cubes and does not bundle
-#'   all information per metric. In the future the standard will be restricted
-#'   to the 4D version. Recommendation: go with the 4D cubes!
-#' @note To check out the results take a look at your netCDF file with
-#'   \href{https://www.giss.nasa.gov/tools/panoply/}{Panoply} provided by the
-#'   NASA.
+#'@param jsonpath Character. Path to the json file downloaded from the EBV Data
+#'  Portal. Login to the page and click on 'Uploads' and 'New Upload' to start
+#'  the process.
+#'@param outputpath Character. Set path where the netCDF file should be created.
+#'@param taxonomy Character. Path to the csv table holding the taxonomy.
+#'  Default: comma-separated delimiter, else change the `sep` argument
+#'  accordingly. The csv needs to have the following structure: The header
+#'  displays the names of the different taxon levels ordered from the highest
+#'  level to the lowest, e.g. "Order", "Family", "Genus", "Species". The last
+#'  column (if `lsid`=FALSE) is equivalent to the `entity` argument in the
+#'  [ebvcube::ebv_create()] function. Each row of the csv corresponds to a
+#'  unique entity. In case the `lsid` argument (see below) is set to the TRUE,
+#'  this table gets an additional last column which holds the lsid per entity -
+#'  in this case the second last column contains the entity names, e.g. the
+#'  following column order: "Order", "Family", "Genus", "Species", "lsid".
+#'@param lsid Logical. Default: FALSE. Set to TRUE if the last column in your
+#'  taxonomy csv file defines the lsid for each entity. For more info check
+#'   \href{https://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#taxon-names-and-identifiers}{CF
+#'   convention 1.8: Taxon Names and Identifiers}.
+#'@param epsg Integer. Default: 4326 (WGS84). Defines the coordinate reference
+#'  system via the corresponding epsg code.
+#'@param extent Numeric. Default: c(-180,180,-90,90). Defines the extent of the
+#'  data: c(xmin, xmax, ymin, ymax).
+#'@param resolution Numerical. Vector of two numerical values defining the
+#'  longitudinal and latitudinal resolution of the pixel: c(lon,lat).
+#'@param timesteps Character. Vector of the timesteps in the dataset. Default:
+#'  NULL - in this case the time will be calculated from the start-, endpoint
+#'  and temporal resolution given in the metadata file (json). Else, the dates
+#'  must be given in in ISO format 'YYYY-MM-DD' or shortened 'YYYY' in case of
+#'  yearly timesteps.
+#'@param fillvalue Numeric. Value of the missing data in the array. Not
+#'  mandatory but should be defined!
+#'@param prec Character. Default: 'double'. Precision of the data set. Valid
+#'  options: 'short' 'integer' 'float' 'double' 'char' 'byte'.
+#'@param sep Character. Default: ','. If the delimiter of the csv specifying the
+#'  entity-names differs from the default, indicate here.
+#'@param force_4D Logical. Default is TRUE. If the argument is TRUE, there will
+#'  be 4D cubes (lon, lat, time, entity) per metric. If this argument is changed
+#'  to FALSE, there will be 3D cubes (lon, lat, time) per entity (per metric).
+#'  So the latter yields a higher amount of cubes and does not bundle all
+#'  information per metric. In the future the standard will be restricted to the
+#'  4D version. Recommendation: go with the 4D cubes!
+#'@param overwrite Logical. Default: FALSE. Set to TRUE to overwrite the output
+#'  file defined by 'outputpath'
+#'@param verbose Logical. Default: TRUE. Turn off additional prints by setting
+#'  it to FALSE. #' @note To check out the results take a look at your netCDF
+#'  file with \href{https://www.giss.nasa.gov/tools/panoply/}{Panoply} provided
+#'  by the NASA.
 #'
-#' @return Creates the netCDF file at the 'outputpath' location.
-#' @export
+#'@note You can check the taxonomy info with [ebvcube::ebv_properties()] in the slot
+#'  'general' under the name 'taxonomy' and 'taxonomy_lsid'.
 #'
-#' @importFrom utils capture.output
+#'@return Creates the netCDF file at the 'outputpath' location including the
+#'  taxonomy information.
+#'@export
+#'
+#'@importFrom utils head
 #'
 #' @examples
 #' #set path to JSON file
-#' json <- system.file(file.path("extdata","metadata.json"), package="ebvcube")
+#' json <- system.file(file.path("extdata/testdata","5.json"), package="ebvcube")
 #' #set output path of the new EBV netCDF
-#' out <- file.path(system.file(package='ebvcube'),"extdata","sCAR_new.nc")
-#' #set path to the csv holding the entity names
-#' entities <- file.path(system.file(package='ebvcube'),"extdata","entities.csv")
+#' out <-  tempfile(fileext='.nc')
+#' #set path to the csv holding the taxonomy names
+#' taxonomy <- file.path(system.file(package='ebvcube'),"extdata/testdata","id5_entities.csv")
 #'
-#' #create new EBV netCDF
+#' #create new EBV netCDF with taxonomy
 #' \dontrun{
-#' ebv_create(jsonpath = json, outputpath = out, entities = entities,
-#'            fillvalue=-3.4E38)
+#' ebv_create_taxonomy(jsonpath = json, outputpath = out, taxonomy = taxonomy,
+#'            fillvalue = -127, resolution = c(0.25, 0.25), verbose = FALSE)
+#' #remove file
+#' file.remove(out)
 #' }
-ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
-                       extent = c(-180,180,-90,90), resolution = c(1,1),
-                       timesteps = NULL, fillvalue = NULL, prec = 'double',
-                       sep=',', force_4D = TRUE, overwrite = FALSE,
-                       verbose = TRUE){
+ebv_create_taxonomy <- function(jsonpath, outputpath, taxonomy, lsid=FALSE,
+                                epsg = 4326, extent = c(-180,180,-90,90), resolution = c(1,1),
+                                timesteps = NULL, fillvalue = NULL, prec = 'double',
+                                sep=',', force_4D = TRUE, overwrite = FALSE,
+                                verbose = TRUE){
+
   # start initial tests ----
   # ensure file and all datahandles are closed on exit
   withr::defer(
@@ -85,7 +102,7 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
       }
     }
   )
-  dids <- c('crs.id', 'lat.id', 'lon.id', 'time.id', 'did')
+  dids <- c('crs.id', 'lat.id', 'lon.id', 'time.id', 'did', 'entity.id')
   withr::defer(
     for (id in dids){
       if(exists(id)){
@@ -96,12 +113,12 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
   )
   withr::defer(
     if(exists('nc')){
-      tryCatch(utils::capture.output(ncdf4::nc_close(nc)))
+      tryCatch(l <- utils::capture.output(ncdf4::nc_close(nc)))
     }
   )
   withr::defer(
     if(exists('nc_test')){
-      tryCatch(utils::capture.output(ncdf4::nc_close(nc_test)))
+      tryCatch(l <- utils::capture.output(ncdf4::nc_close(nc_test)))
     }
   )
 
@@ -114,8 +131,8 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
     }
   )
   withr::defer(
-    if(exists('entity_csv')){
-      rm(entity_csv)
+    if(exists('csv_txt')){
+      rm(csv_txt)
     }
   )
 
@@ -129,8 +146,8 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
   if(missing(outputpath)){
     stop('Outputpath argument is missing.')
   }
-  if(missing(entities)){
-    stop('Entities argument is missing.')
+  if(missing(taxonomy)){
+    stop('Taxonomy argument is missing.')
   }
 
   #turn off local warnings if verbose=TRUE
@@ -183,57 +200,33 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
     stop('extent needs to be a list of 4 numeric values.')
   }
 
-  #check entities
-  if (checkmate::checkCharacter(entities) != TRUE){
-    stop('Entities must be of type character.')
+  #check taxonomy
+  if (checkmate::checkCharacter(taxonomy) != TRUE){
+    stop('Taxonomy must be of type character.')
   }
-  if(checkmate::checkCharacter(entities, len=1) != TRUE){
-    #length longer than 1 -> list of entities
-    csv <- FALSE
+  if(checkmate::checkCharacter(taxonomy, len=1) != TRUE){
+    #length longer than 1 -> return error
+    stop('Taxonomy must be of length 1.')
   }else{
-    #length exactly 1 - either csv or vector
-    #test if it is a file that can be opened
-    csv <- tryCatch({con <- file(entities, open='rt')
-                      csv <- TRUE
-                      },
-                  error=function(e){
-                    #it is a character vector
-                    csv <- FALSE
-                  },
-                  warning = function(w){
-                    csv <- FALSE
-                  })
-  }
-  #if csv, make tests:
-  if(csv){
-    close(con)
-    if (checkmate::checkFileExists(entities) != TRUE){
-      stop(paste0('Entities csv file does not exist.\n', entities))
-    }
-    if (!endsWith(entities, '.csv')){
-      stop(paste0('Entities file ending is wrong. File cannot be processed.'))
-    }
-    #read csv---
-    # check if data inside
-    tryCatch({
-      entity_csv <- suppressWarnings(utils::read.csv(entities, sep=sep, header=FALSE, fileEncoding="UTF-8"))
-    },
-    error=function(e){
-      if(stringr::str_detect(as.character(e), 'no lines available')){
-        stop('Empty csv table given for entities.')
-      } else {
-        stop('Could not read csv (entities).')
+    # check csv
+      if (checkmate::checkFileExists(taxonomy) != TRUE){
+        stop(paste0('Taxonomy csv file does not exist.\n', taxonomy))
       }
-    })
-    #check
-    if(length(names(entity_csv))>1){
-      warning(paste0('The entity csv given by you has more than one column. ',
-                     'The first column will be used.'))
-    }
-
-  }else{
-  #get entities from vector
-    entity_csv <-data.frame(entities)
+      if (!endsWith(taxonomy, '.csv')){
+        stop(paste0('Taxonomy file ending is wrong. File cannot be processed. Must be *.csv.'))
+      }
+      #read csv---
+      # check if data inside
+      tryCatch({
+        csv_txt <- suppressWarnings(utils::read.csv(taxonomy, sep=sep, header=TRUE, fileEncoding="UTF-8"))
+      },
+      error=function(e){
+        if(stringr::str_detect(as.character(e), 'no lines available')){
+          stop('Empty csv table given for taxonomy')
+        } else {
+          stop(paste0('Could not read csv (taxonomy):\n', as.character(e)))
+        }
+      })
   }
 
   #check prec
@@ -280,27 +273,48 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
 
   # end initial tests ----
 
-  #overwrite --> delete file
+  #overwrite --> delete file ---
   if (file.exists(outputpath) && overwrite==TRUE){
     tryCatch(file.remove(outputpath),
-                  warning = function(w){
-                    temp <- stringr::str_remove(as.character(w), '\\\\')
-                    if(stringr::str_detect(temp,'cannot remove file')){
-                      stop('Outputpath file already exists and you enabled overwrite, but file cannot be overwritten. Most likely the file is opened in another application.')
-                    }
-                  })
+             warning = function(w){
+               temp <- stringr::str_remove(as.character(w), '\\\\')
+               if(stringr::str_detect(temp,'cannot remove file')){
+                 stop('Outputpath file already exists and you enabled overwrite, but file cannot be overwritten. Most likely the file is opened in another application.')
+               }
+             })
 
   }
 
+  # read taxonomy info ----
+  dim_csv <- dim(csv_txt)
 
+  #get entities and maybe lsid-list
+  if(lsid){
+    entities <- csv_txt[,(dim_csv[2]-1)]
+    lsid_list <- csv_txt[,dim_csv[2]]
+    csv_txt <- csv_txt[,-dim_csv[2]]
+    taxon_list <- names(csv_txt)
+  }else{
+    taxon_list <- names(csv_txt)
+    entities <- csv_txt[,dim_csv[2]]
+    lsid_list <- NA
+  }
+
+  #check lsid list and entities
+  if(lsid && (length(lsid_list)!=length(entities))){
+    stop(paste0('The length of your lsid-list differs from the length of the entities:\n',
+                'length lsid: ', length(lsid),
+                '\nlength entities: ', length(entities)))
+  }
 
   # get basic hierarchy info ----
   metrics_no <- length(json$ebv_metric)
-  entities_no <- nrow(entity_csv)
+  entities_no <- length(entities)
   scenarios_no <- length(json$ebv_scenario)-3
+  taxon_no <- length(taxon_list)
   if (scenarios_no==1){
     if(ebv_i_empty(file$data$ebv_scenario[[1]]) || file$data$ebv_scenario[[1]]=='N/A')
-    scenarios_no <- 0
+      scenarios_no <- 0
   } else if(scenarios_no<0){
     scenarios_no <- 0
   }
@@ -322,13 +336,6 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
   } else{
     crs_unit <- 'degree'
   }
-  #compare geospatial unit from EPSG and json
-  # json_unit <- json$geospatial_lat_units
-  # if (!stringr::str_detect(json_unit, crs_unit)){
-  #   message(paste0('Geospatial unit detected from json (',stringr::str_split(json_unit,'_')[[1]][1],
-  #                  ') and detected from given EPSG (',crs_unit,') differ. NetCDF will',
-  #                  ' be created using the unit detected from EPSG.'))
-  # }
 
   # get dimensions ----
   # time ----
@@ -371,7 +378,7 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
       #one timestep only
       #check
       if(t_start!=t_end && verbose){
-        warning('Your dataset has one timestep only based on the temporal resolution attribute but your given end and end date are different. Note: the start date will be applied to the dataset.')
+        warning('Your dataset has one timestep only based on the temporal resolution attribute but your given start and end date are different. Note: the end date will be applied to the dataset.')
       }
       date <- as.numeric(as.Date(t_end))
       timesteps <- date+add
@@ -519,8 +526,9 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
     time_dim <- ncdf4::ncdim_def('time', 'days since 1860-01-01 00:00:00.0' , timesteps, unlim = TRUE)#HERE
   }
   entity_dim <- ncdf4::ncdim_def('entity', '', vals = 1:entities_no, create_dimvar=FALSE)
+  taxon_dim <- ncdf4::ncdim_def('taxonlevel', '', vals = 1:taxon_no, create_dimvar=FALSE)
 
-  # create list of vars 3D ----
+  # create list of vars 3D----
   if(force_4D==FALSE){
     var_list <- c()
     # 1. metric, no scenario
@@ -594,9 +602,9 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
                                  compression=5, prec=prec,
                                  verbose=FALSE, shuffle=shuffle)
     nc_test <- ncdf4::nc_create(filename = temp,
-                           vars = test_def,
-                           force_v4 = TRUE,
-                           verbose = FALSE)
+                                vars = test_def,
+                                force_v4 = TRUE,
+                                verbose = FALSE)
     ncdf4::nc_close(nc_test)
     #read out chunksize definition
     nc_test <- ncdf4::nc_open(temp)
@@ -621,7 +629,7 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
                                       dim= list(lon_dim, lat_dim, time_dim),
                                       missval=fillvalue, compression=5,
                                       prec=prec, verbose=verbose, shuffle=shuffle
-                                      ))
+        ))
         var_list_nc[[enum]] <- eval(parse(text=name))
         enum <- enum +1
       }
@@ -634,13 +642,13 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
                                       dim= list(lon_dim, lat_dim, time_dim),
                                       compression=5, prec=prec,
                                       verbose=verbose, shuffle=shuffle
-                                      ))
+        ))
         var_list_nc[[enum]] <- eval(parse(text=name))
         enum <- enum +1
       }
     }
   }else{
-  # create all vars 4D ----
+    # create all vars 4D ----
     if (!is.null(fillvalue)){
       for (var in var_list){
         metric.str <- stringr::str_split(var, '/')[[1]][stringr::str_detect(stringr::str_split(var, '/')[[1]], 'metric')]
@@ -670,16 +678,16 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
     }
   }
 
-
   #add crs variable ----
   var_list_nc[[enum]] <- ncdf4::ncvar_def(name = 'crs', units = '',
                                           dim= list(),
                                           prec='char', verbose=verbose)
+
   enum <- enum+1
   #check for special characters
   sz <- c()
   for (u in c('\ufc', '\uf6', '\ue4', '\udf', '\udc', '\uc4', '\ud6')){
-    if(any(stringr::str_detect(entity_csv[,1],u))){
+    if(any(stringr::str_detect(entities,u))){
       sz <- c(sz, u)
     }
   }
@@ -689,11 +697,35 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
   }
 
   #add entities variable ----
-  max_char <- max(nchar(entity_csv[,1]))
-  dimchar <- ncdf4::ncdim_def("nchar", "", 1:max_char, create_dimvar=FALSE)
+  max_char_entity <- max(apply(csv_txt, 2, function(x) max(nchar(x))))
+  dimchar_entity <- ncdf4::ncdim_def("nchar", "", 1:max_char_entity, create_dimvar=FALSE)
+  #entity
   var_list_nc[[enum]] <- ncdf4::ncvar_def(name = 'entity', unit='1', #HERE adimensional
-                                          dim=list(dimchar,entity_dim),
+                                          dim=list(dimchar_entity,entity_dim),
                                           prec='char', verbose = verbose)
+  enum <- enum+1
+  #add entity_list variable ----
+  var_list_nc[[enum]] <- ncdf4::ncvar_def(name = 'entity_list', unit='1', #HERE adimensional
+                                          dim=list(taxon_dim, entity_dim, dimchar_entity),
+                                          prec='char', verbose = verbose)
+  enum <- enum+1
+
+  # add entity_levels variable ----
+  max_char_taxonlevel <- max(nchar(taxon_list))
+  dimchar_taxonlevel <- ncdf4::ncdim_def("nchar_taxonlist", "", 1:max_char_taxonlevel, create_dimvar=FALSE)
+  var_list_nc[[enum]] <- ncdf4::ncvar_def(name = 'entity_levels', unit='1', #HERE adimensional
+                                          dim=list(taxon_dim, dimchar_taxonlevel),
+                                          prec='char', verbose = verbose)
+  enum <- enum+1
+
+  # add entity_ids variable ----
+  if(lsid){
+    max_char_lsid <- max(nchar(lsid_list))
+    dimchar_lsid <- ncdf4::ncdim_def("nchar_lsid", "", 1:max_char_lsid, create_dimvar=FALSE)
+    var_list_nc[[enum]] <- ncdf4::ncvar_def(name = 'entity_lsid', unit='1', #HERE adimensional
+                                            dim=list(entity_dim, dimchar_lsid),
+                                            prec='char', verbose = verbose)
+  }
 
   # add all vars ----
   # also creates groups
@@ -705,7 +737,7 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
   # close file
   ncdf4::nc_close(nc)
 
-  # use hdf5 to add all attributes
+  # use hdf5 to add all attributes ----
   # open file
   hdf <- rhdf5::H5Fopen(outputpath)
 
@@ -724,29 +756,29 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
 
   #dynamic attributes
   {
-  global.att <- list()
-  global.att['title'] <- 'title'
-  global.att['id'] <- 'preliminary_id'
-  global.att['summary'] <- 'summary'
-  global.att['references'] <- 'references'
-  global.att['source'] <- 'source'
-  global.att['project_name'] <- 'project'
-  global.att['project_url'] <- 'project_url'
-  global.att['date_created'] <- 'date_created'
-  global.att['creator_name'] <- 'creator$creator_name'
-  global.att['creator_institution'] <- 'creator$creator_institution'
-  global.att['creator_email'] <- 'creator$creator_email'
-  global.att['license'] <- 'license'
-  global.att['contributor_name'] <- 'contributor_name'
-  global.att['publisher_name'] <- 'publisher$publisher_name'
-  global.att['publisher_institution'] <- 'publisher$publisher_institution'
-  global.att['publisher_email'] <- 'publisher$publisher_email'
-  global.att['comment'] <- 'comment'
-  global.att['ebv_class']<-'ebv$ebv_class'
-  global.att['ebv_name']<-'ebv$ebv_name'
-  global.att['ebv_spatial_scope']<-'ebv_geospatial$ebv_geospatial_scope'
-  global.att['ebv_spatial_description']<-'ebv_geospatial$ebv_geospatial_description'
-  global.att['ebv_domain']<-'ebv_domain'
+    global.att <- list()
+    global.att['title'] <- 'title'
+    global.att['id'] <- 'preliminary_id'
+    global.att['summary'] <- 'summary'
+    global.att['references'] <- 'references'
+    global.att['source'] <- 'source'
+    global.att['project_name'] <- 'project'
+    global.att['project_url'] <- 'project_url'
+    global.att['date_created'] <- 'date_created'
+    global.att['creator_name'] <- 'creator$creator_name'
+    global.att['creator_institution'] <- 'creator$creator_institution'
+    global.att['creator_email'] <- 'creator$creator_email'
+    global.att['license'] <- 'license'
+    global.att['contributor_name'] <- 'contributor_name'
+    global.att['publisher_name'] <- 'publisher$publisher_name'
+    global.att['publisher_institution'] <- 'publisher$publisher_institution'
+    global.att['publisher_email'] <- 'publisher$publisher_email'
+    global.att['comment'] <- 'comment'
+    global.att['ebv_class']<-'ebv$ebv_class'
+    global.att['ebv_name']<-'ebv$ebv_name'
+    global.att['ebv_spatial_scope']<-'ebv_geospatial$ebv_geospatial_scope'
+    global.att['ebv_spatial_description']<-'ebv_geospatial$ebv_geospatial_description'
+    global.att['ebv_domain']<-'ebv_domain'
   }
 
   #keywords
@@ -970,21 +1002,12 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
   #close
   rhdf5::H5Dclose(time.id)
 
-  # add values to 'entity' var ----
-  # string-valued auxiliary coordinate variable
-  entity.values <- c()
-  for (i in 1:length(entity_csv[,1])){
-    new_values <- stringr::str_split(entity_csv[i,1],'')[[1]]
-    if (length(new_values)<max_char){
-      for (i in 1:(max_char - length(new_values))){
-        new_values<- c(new_values, ' ')
-        }
-    }
-    entity.values <- c(entity.values, new_values)
-  }
-  entity.values <- enc2utf8(entity.values)
+  #add values to entity var----
+  entity_names <- as.data.frame(stringr::str_split(stringr::str_pad(entities, max_char_entity, side = c("right")),''))
+  entity_n <- enc2utf8(unlist(entity_names))
+
   entity.id <- rhdf5::H5Dopen(hdf, 'entity')#HERE
-  rhdf5::H5Dwrite(entity.id, entity.values)
+  rhdf5::H5Dwrite(entity.id, entity_n)
 
   # acdd terms
   ebv_i_char_att(entity.id, 'ebv_entity_type', json$ebv_entity$ebv_entity_type)
@@ -993,7 +1016,6 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
   ebv_i_char_att(entity.id, 'ebv_entity_classification_url', json$ebv_entity$ebv_entity_classification_url)
 
   #add long_name and standard_name
-  #ebv_i_char_att(entity.id, 'standard_name', 'Entity variable')
   ebv_i_char_att(entity.id, 'long_name', 'entity')
 
   rhdf5::H5Dclose(entity.id)
@@ -1050,13 +1072,13 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
       ebv_i_char_att(did, 'grid_mapping', '/crs')
       ebv_i_char_att(did, 'coordinates', '/entity')#HERE
       ebv_i_char_att(did, 'coverage_content_type', paste0(json$coverage_content_type, collapse=', '))
-      ebv_i_char_att(did, 'standard_name', entity_csv[enum,1])
+      ebv_i_char_att(did, 'standard_name', entities[enum])
       #close dh
       rhdf5::H5Dclose(did)
       #enum <- enum +1
     }
   }else{
-  #add entity attributes 4D ----
+    #add entity attributes 4D ----
     enum <-1
     for(var in var_list){
       parts <- stringr::str_split(var, '/')[[1]]
@@ -1076,5 +1098,35 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
 
   # close file  ----
   rhdf5::H5Fclose(hdf)
+
+  # add values to 'entity_list' var ----
+  level_i <- length(taxon_list)
+
+  for(level in taxon_list){
+    #transform values so they fit into the variable
+    data_level_clean <- ebv_i_char_variable(csv_txt[,level], max_char_entity)
+
+    if(verbose){
+      print(paste0('add ',level,' data to level: ', level_i))
+    }
+
+    rhdf5::h5write(data_level_clean, file=outputpath,
+                   name="entity_list", index=list(level_i,NULL, NULL))
+
+    level_i <- level_i-1
+  }
+
+  # add values to 'entity_levels' var ----
+  level_d <- ebv_i_char_variable(taxon_list, max_char_taxonlevel, TRUE)
+  rhdf5::h5write(level_d, file=outputpath,
+                 name="entity_levels")
+
+  # add values to 'entity_lsid' var ----
+  if(lsid){
+    ls_id_d <- ebv_i_char_variable(lsid_list, max_char_lsid)
+    rhdf5::h5write(ls_id_d, file=outputpath,
+                   name="entity_lsid")
+  }
+
 
 }

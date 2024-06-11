@@ -24,10 +24,10 @@ ebv_i_os <- function(){
 #' @noRd
 ebv_i_file_opened <- function(filepath, verbose=TRUE){
   if(interactive()){
-    if (ebv_i_os() =='Linux' | ebv_i_os() =='Darwin'){
+    if (ebv_i_os() =='Linux' || ebv_i_os() =='Darwin'){
 
       stdout <- paste0("fuser -f '", filepath, "'")
-      result = system(stdout, intern=TRUE)
+      result <- system(stdout, intern=TRUE)
 
       if (!ebv_i_empty(result)){
         if (result != '0'){
@@ -39,7 +39,7 @@ ebv_i_file_opened <- function(filepath, verbose=TRUE){
     } else if (ebv_i_os() == 'Windows') {
       #check whether file can be accessed with writing permission
       cmd <- paste0("powershell $FileStream = [System.IO.File]::Open('",filepath,"','Open','Write')")
-      out <- suppressWarnings(shell(cmd, intern=T,mustWork=T))
+      out <- suppressWarnings(shell(cmd, intern=TRUE,mustWork=TRUE))
       #process out
       if(!ebv_i_empty(out)){
         if(verbose){
@@ -135,20 +135,20 @@ ebv_i_type_ot <- function(type.long){
 
 
   if(type.long %in% types.int){
-    ot = 'Int'
+    ot <- 'Int'
   } else if(type.long %in% types.uint){
-    ot = 'UInt'
+    ot <- 'UInt'
   } else if(type.long %in% types.byte){
-    ot = 'Byte'
+    ot <- 'Byte'
   } else if(type.long %in% types.float){
-    ot = 'Float'
+    ot <- 'Float'
   } else {
-    ot = NULL
+    ot <- NULL
   }
 
   if (!is.null(ot)){
     #float and int
-    if (ot != 'Byte' & ot != 'UInt'){
+    if (ot != 'Byte' && ot != 'UInt'){
       #get bytes
       bytes <- regmatches(type.long, gregexpr("[[:digit:]]+", type.long))[[1]][2]
       #bytes are declared in type
@@ -187,7 +187,7 @@ ebv_i_type_ot <- function(type.long){
       # check UInt types
       bytes <- regmatches(type.long, gregexpr("[[:digit:]]+", type.long))[[1]][2]
       if(! is.na(bytes)){
-        if(as.integer(bytes)==16 | as.integer(bytes)==32){
+        if(as.integer(bytes)==16 || as.integer(bytes)==32){
           ot <- paste0(ot, bytes)
         } else if (as.integer(bytes)==8){
           ot <- 'UInt16'
@@ -202,7 +202,7 @@ ebv_i_type_ot <- function(type.long){
     }
 
     if (! ot %in% ot.list){
-      ot = NULL
+      ot <- NULL
     }
   }
 
@@ -282,7 +282,7 @@ ebv_i_check_ram <- function(dims, timestep, entity, type){
     #get ram pc
     ram.pc <- ebv_i_ram()
     ram.pc.free <- ram.pc[2]
-    ram.pc.total <- ram.pc[1]
+    # ram.pc.total <- ram.pc[1]
     #check if data too big
     if(ram.pc.free < ram.var.gb){
       stop(paste0('The space needed to read the data into memory is larger than the free RAM.\nFree RAM: ', ram.pc.free, '\nNeeded RAM: ', round(ram.var.gb,2)))
@@ -575,7 +575,7 @@ ebv_i_entity <- function(entity, entity_names){
 #'
 #' @return Nothing. Throws error, if EPSG cannot be processed.
 #' @noRd
-ebv_i_eval_epsg <- function(epsg, proj=F){
+ebv_i_eval_epsg <- function(epsg, proj=FALSE){
   #create empty raster
   dummy_raster <- terra::rast()
   #assign epsg crs to check wether the epsg can be processed
@@ -595,7 +595,7 @@ ebv_i_eval_epsg <- function(epsg, proj=F){
      }
    })
   if(proj){
-    crs <- terra::crs(dummy_raster, proj=T)
+    crs <- terra::crs(dummy_raster, proj=TRUE)
   }else{
     crs <- terra::crs(dummy_raster)
   }
@@ -629,9 +629,9 @@ ebv_i_get_epsg <- function(wkt){
 #' @noRd
 ebv_i_eval_wkt <- function(wkt){
   if(stringr::str_detect(wkt, 'USAGE')){
-    return(T)
+    return(TRUE)
   }else{
-    return(F)
+    return(FALSE)
   }
 }
 
@@ -652,29 +652,56 @@ ebv_i_paste <- function(characters) {
 }
 
 
-#' Turn ISO date into index for subsetting
+#' Test all integer and ISO date timestep-inputs, return index/indices
 #'
-#' @param date_iso. Character. User input to get data for one timestep.
+#' @param timestep Integer or character.
 #' @param dates. The timesteps/dates available in the netCDF. Comes from the
 #'   ebv_properties function.
 #'
 #' @return Integer. Index of the timestep in the datacube.
 #' @noRd
-ebv_i_date <- function(date_iso, dates){
-  #allow for year only
-  #1. check if several values for one year?
-  #2. allow for integer value
-  #implement the same for month
+ebv_i_date <- function(timestep, dates){
 
-  if(checkmate::checkCharacter(date_iso)!=TRUE){
-    stop('Your timestep must be of type character.')
+  #maximum timesteps
+  max_time <- length(dates)
+
+  #check if integer or character
+  if ((checkmate::check_integerish(timestep, lower = 1)!=TRUE) && (checkmate::checkCharacter(timestep)!=TRUE)){
+    stop('The argument timestep must be of type integer or character.')
   }
-  index <- which(date_iso==dates)
-  if(checkmate::checkInt(index)!=TRUE){
-    stop(paste0('Could not find the timestep specified by you: ', date_iso, '\nAvailable timesteps: ', paste0(dates, collapse = ', ')))
-  }else{
-    return(index)
+
+  #if integer
+  if(checkmate::check_integerish(timestep)==TRUE){
+    #check that timestep is not bigger than the maximum timestep
+    if(checkmate::check_integerish(timestep, lower = 1, upper = max_time, max.len = max_time)!=TRUE){
+      timestep <- timestep[which(! timestep %in% 1:max_time)]
+      stop(paste0('Part of your timesteps is out of the temporal bounds: ', paste(timestep, collapse = ', '), '. Timestep range is 1 to ', max_time, '.'))
+    }else{
+      #return timestep
+      return(timestep)
+    }
+  } else if (checkmate::checkCharacter(timestep)==TRUE){
+  #if character - find index, check if outside range
+
+    #make sure dates are character
+    dates <- as.character(dates)
+    #get index of date(s)
+    index <- which(dates %in% timestep)
+    #check: found any timestep?
+    if(!length(index)>0){
+      stop(paste0('Could not find the timestep(s) specified by you: ', paste(timestep, collapse = ', '), '\nAvailable timesteps: ', paste0(dates, collapse = ', ')))
+    }else if (length(index)!=length(timestep)){
+      #found only part of the timesteps?
+      timestep <- timestep[which(! timestep %in% dates)]
+      stop(paste0('Part of your timesteps is out of the temporal bounds: ', paste(timestep, collapse = ', '), '. Timestep range is ', paste(dates, collapse = ', '), '.'))
+    }else{
+      #found all -> success!
+      return(index)
+    }
+    #IMPLEMENT FOR YEAR/MONTH ONLY
+
   }
+
 }
 
 #' Turn scenario and metric into the datacubepath
@@ -690,24 +717,24 @@ ebv_i_datacubepath <- function(scenario=NULL, metric, datacubepaths, verbose){
   #initial checks----
   #how many scenarios are there?
   if(stringr::str_detect(datacubepaths[1,1], 'scenario')){
-    s <- length(unique(stringr::str_split(datacubepaths[,1], '/', simplify = T)[,1]))
+    s <- length(unique(stringr::str_split(datacubepaths[,1], '/', simplify = TRUE)[,1]))
   }else{
     s <- 0
   }
   #how many metrics are there?
   if (s >0){
-    m <- length(unique(stringr::str_split(datacubepaths[,1], '/', simplify = T)[,2]))
+    m <- length(unique(stringr::str_split(datacubepaths[,1], '/', simplify = TRUE)[,2]))
   }else{
-    m <- length(unique(stringr::str_split(datacubepaths[,1], '/', simplify = T)[,1]))
+    m <- length(unique(stringr::str_split(datacubepaths[,1], '/', simplify = TRUE)[,1]))
   }
 
   #check scenario definition----
 
-  if(!(checkmate::checkCharacter(scenario)==TRUE | is.null(scenario) | checkmate::checkIntegerish(scenario, len=1) == TRUE)){
+  if(!(checkmate::checkCharacter(scenario)==TRUE || is.null(scenario) || checkmate::checkIntegerish(scenario, len=1) == TRUE)){
     #check if scenario matches any of the allowed types
     stop('The scenario argument must either be of type character, a simple integer or  NULL (if the dataset has no scenario).')
 
-  }else if(!is.null(scenario) & s==0){
+  }else if(!is.null(scenario) && s==0){
     #if there is a scenario defined by the user but actually not in the dataset/needed
     if(verbose){print('You specified a scenario, but the dataset has no scenarios. The scenario will be ignored.')}
     part_1 <- ''
@@ -723,16 +750,16 @@ ebv_i_datacubepath <- function(scenario=NULL, metric, datacubepaths, verbose){
       part_1 <- paste0('scenario_', scenario, '/')
     }
 
-  } else if(is.null(scenario) & s>1){
+  } else if(is.null(scenario) && s>1){
     #NULL but there is more than one scenario
     stop(paste0('You only specified a metric but the dataset has ', s, ' scenarios. Please specify one. If you do not know what scenarios there are check the ebv_datacubepaths function.'))
 
-  } else if(is.null(scenario) & s==1){
+  } else if(is.null(scenario) && s==1){
     #if scenario is not specified but there is only 1
     part_1 <- 'scenario_1/'
     if(verbose){print('You did not provide a scenario argument. As there is only one scenario in the dataset, the function refers to that one.')}
 
-  }else if(is.null(scenario) & s==0){
+  }else if(is.null(scenario) && s==0){
     #if there is no scenario
     part_1 <- ''
 
@@ -742,15 +769,15 @@ ebv_i_datacubepath <- function(scenario=NULL, metric, datacubepaths, verbose){
       #try absolute matching
       s_index <- which(scenario == datacubepaths$scenario_names)[1]
       if(!is.na(s_index)){
-        part_1 <- paste0(stringr::str_split(datacubepaths$datacubepaths[s_index], '/', simplify = T)[1,1], '/')
+        part_1 <- paste0(stringr::str_split(datacubepaths$datacubepaths[s_index], '/', simplify = TRUE)[1,1], '/')
       }else{
         #try fuzzy matching
-        dist <- utils::adist(scenario , datacubepaths$scenario_names, ignore.case=T, partial=F)
+        dist <- utils::adist(scenario , datacubepaths$scenario_names, ignore.case=TRUE, partial=FALSE)
         s_index <- which(dist == min(dist))
         if(length(s_index) > 1) {
           stop('No match for the scenario you gave. Please correct or use the ebv_datacubepaths function to fill in the datacubepath argument instead.')
         }else{
-          part_1 <- paste0(stringr::str_split(datacubepaths$datacubepaths[s_index], '/', simplify = T)[1,1], '/')
+          part_1 <- paste0(stringr::str_split(datacubepaths$datacubepaths[s_index], '/', simplify = TRUE)[1,1], '/')
         }
 
         #inform user
@@ -760,7 +787,7 @@ ebv_i_datacubepath <- function(scenario=NULL, metric, datacubepaths, verbose){
       }
 
     }else if (s==1){
-      part_1 = 'scenario_1'
+      part_1 <- 'scenario_1'
       if(verbose){print('There is only one scenario in the dataset, the function refers to that one (no checking of your argument).')}
 
     }
@@ -768,7 +795,7 @@ ebv_i_datacubepath <- function(scenario=NULL, metric, datacubepaths, verbose){
   }
 
   #check metric definition----
-  if(!(checkmate::checkCharacter(metric)==TRUE | checkmate::checkIntegerish(metric, len=1) == TRUE)){
+  if(!(checkmate::checkCharacter(metric)==TRUE || checkmate::checkIntegerish(metric, len=1) == TRUE)){
     stop('The metric argument must be of type character.')
 
   } else if(checkmate::checkIntegerish(metric, len=1) == TRUE){
@@ -794,19 +821,19 @@ ebv_i_datacubepath <- function(scenario=NULL, metric, datacubepaths, verbose){
         m_index <- which(metric == datacubepaths$metric_names)[1]
         if(!is.na(m_index)){
           if(s>0){
-            part_2 <- paste0(stringr::str_split(datacubepaths$datacubepaths[m_index], '/', simplify = T)[1,2], '/')
+            part_2 <- paste0(stringr::str_split(datacubepaths$datacubepaths[m_index], '/', simplify = TRUE)[1,2], '/')
           }else{
-            part_2 <- paste0(stringr::str_split(datacubepaths$datacubepaths[m_index], '/', simplify = T)[1,1], '/')
+            part_2 <- paste0(stringr::str_split(datacubepaths$datacubepaths[m_index], '/', simplify = TRUE)[1,1], '/')
           }
 
         }else{
           #try fuzzy matching
-          dist <- utils::adist(metric , datacubepaths$metric_names, ignore.case=T, partial=F)
+          dist <- utils::adist(metric , datacubepaths$metric_names, ignore.case=TRUE, partial=FALSE)
           m_index <- which(dist == min(dist))
           if(length(m_index) > 1) {
             stop('No match for the metric you gave. Please correct or use the ebv_datacubepaths function to fill in the datacubepath argument instead.')
           }else{
-            part_2 <- paste0(stringr::str_split(datacubepaths$datacubepaths[m_index], '/', simplify = T)[1,2], '/')
+            part_2 <- paste0(stringr::str_split(datacubepaths$datacubepaths[m_index], '/', simplify = TRUE)[1,2], '/')
           }
 
           #inform user
@@ -841,4 +868,27 @@ ebv_i_datacubepath <- function(scenario=NULL, metric, datacubepaths, verbose){
   #return the datacubepath
   return(datacubepath)
 
+}
+
+#' Turn string vector into character array for char-variable in netCDF, e.g.
+#' entity_list
+#'
+#' @param string_vector Vector holding the string-data that will be added to the
+#'   character variable in the netCDF
+#' @param max_char Integer value telling the maximum length of all the strings.
+#'   Strings that are shorter will be extended with whitespaces until they have
+#'   this length
+#' @param reverse Boolean value, default is FALSE. In case the data needs to be
+#'   stored in reverse order (e.g. taxon levels)
+#'
+#' @return Returns a character array
+#' @noRd
+ebv_i_char_variable <- function(string_vector, max_char, reverse=FALSE){
+  data_level <- as.data.frame(stringr::str_split(stringr::str_pad(string_vector, max_char, side = c("right")),''))
+  data_level <- t(data_level)
+  if(reverse){
+    data_level <- data_level[nrow(data_level):1,]
+  }
+  data_level_clean <- enc2utf8(unlist(data_level))
+  return(data_level_clean)
 }

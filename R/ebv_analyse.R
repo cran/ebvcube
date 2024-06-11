@@ -3,8 +3,9 @@
 #' @description Get basic measurements of the data, including min, max, mean,
 #'   sd, n, #NAs, q25, q50, q75 (no mean for categorical data).
 #' @param filepath Character. Path to the netCDF file.
-#' @param datacubepath Character. Path to the datacube (use
-#'   [ebvcube::ebv_datacubepaths()]).
+#' @param datacubepath Character. Optional. Default: NULL. Path to the datacube
+#'   (use [ebvcube::ebv_datacubepaths()]). Alternatively, you can use the
+#'   scenario and metric argument to define which cube you want to access.
 #' @param entity Character or Integer. Default is NULL. If the structure is 3D,
 #'   the entity argument is set to NULL. Else, a character string or single
 #'   integer value must indicate the entity of the 4D structure of the EBV
@@ -13,12 +14,25 @@
 #'   via the path to a shapefile (character) or the indication of a bounding box
 #'   (vector of four numeric values) defining the subset. Else the whole area is
 #'   analysed.
-#' @param timestep Integer. Choose one or several timesteps (vector).
-#' @param touches Logical. Optional. Default: TRUE. Only relevant if the subset is
-#'   indicated by a shapefile. See [ebvcube::ebv_read_shp()].
+#' @param timestep Integer or character. Select one or several timestep(s).
+#'   Either provide an integer value or list of values that refer(s) to the
+#'   index of the timestep(s) (minimum value: 1) or provide a date or list of
+#'   dates in ISO format, such as '2015-01-01'.
+#' @param touches Logical. Optional. Default: TRUE. Only relevant if the subset
+#'   is indicated by a shapefile. See [ebvcube::ebv_read_shp()].
 #' @param epsg Numeric. Optional. Only relevant if the subset is indicated by a
 #'   bounding box and the coordinate reference system differs from WGS84. See
 #'   [ebvcube::ebv_read_bb()].
+#' @param scenario Character or integer. Optional. Default: NULL. Define the
+#'   scenario you want to access. If the EBV netCDF has no scenarios, leave the
+#'   default value (NULL). You can use an integer value defining the scenario or
+#'   give the name of the scenario as a character string. To check the available
+#'   scenarios and their name or number (integer), use
+#'   [ebvcube::ebv_datacubepaths()].
+#' @param metric Character or integer. Optional. Define the metric you want to
+#'   access. You can use an integer value defining the metric or give the name
+#'   of the scenario as a character string. To check the available metrics and
+#'   their name or number (integer), use [ebvcube::ebv_datacubepaths()].
 #' @param numerical Logical. Default: TRUE. Change to FALSE if the data covered
 #'   by the netCDF contains categorical data.
 #' @param na_rm Logical. Default: TRUE. NA values are removed in the analysis.
@@ -28,8 +42,8 @@
 #'
 #' @return Returns a named list containing the measurements.
 #' @export
-#' @seealso [ebvcube::ebv_read_bb()] and [ebvcube::ebv_read_shp()]
-#'   for the usage of subsets.
+#' @seealso [ebvcube::ebv_read_bb()] and [ebvcube::ebv_read_shp()] for the usage
+#'   of subsets.
 #'
 #' @importFrom stats quantile
 #' @examples
@@ -43,20 +57,24 @@
 #' \donttest{
 #' #get measurements for full extent and the first three timesteps
 #' data_global <- ebv_analyse(filepath = file, datacubepath = datacubes[1,1],
-#'                            entity = 1, timestep = 1:3)
+#'                            entity = 1, timestep = 1:3, verbose = FALSE)
 #'
 #' #get measurements for subset of Africa only (using bounding box) and one timestep
-#' data_bb_1900 <- ebv_analyse(filepath = file, datacubepath = datacubes[1,1],
-#'                             entity = 1, timestep = 2, subset = c(-26, 64, 30, 38))
+#' data_1910 <- ebv_analyse(filepath = file, datacubepath = datacubes[1,1],
+#'                          entity = 1, timestep = "1900-01-01",
+#'                          subset = c(-26, 64, 30, 38), verbose = FALSE)
 #'
 #' #get measurements for cameroon only (using shp) and one timestep
-#' data_shp_1900 <- ebv_analyse(filepath = file, datacubepath = datacubes[1,1],
-#'                              entity = 1, timestep = 3, subset = shp_path)
+#' data_1930 <- ebv_analyse(filepath = file, entity = 1,
+#'                          timestep = "1930-01-01",
+#'                          subset = shp_path, verbose = FALSE,
+#'                          metric = 'Absolute change in the number of species',)
 #' }
 
-ebv_analyse <- function(filepath, datacubepath, entity=NULL, timestep=1,
-                        subset=NULL, touches=TRUE, epsg = 4326, numerical=TRUE,
-                        na_rm=TRUE, verbose=TRUE){
+ebv_analyse <- function(filepath, datacubepath = NULL, entity=NULL, timestep=1,
+                        subset=NULL, touches=TRUE, epsg = 4326,
+                        scenario = NULL, metric = NULL,
+                        numerical=TRUE, na_rm=TRUE, verbose=TRUE){
   ####initial tests start ----
   # ensure file and all datahandles are closed on exit
   withr::defer(
@@ -69,12 +87,9 @@ ebv_analyse <- function(filepath, datacubepath, entity=NULL, timestep=1,
   if(missing(filepath)){
     stop('Filepath argument is missing.')
   }
-  if(missing(datacubepath)){
-    stop('Datacubepath argument is missing.')
-  }
 
   #check verbose
-  if(checkmate::checkLogical(verbose, len=1, any.missing=F) != TRUE){
+  if(checkmate::checkLogical(verbose, len=1, any.missing=FALSE) != TRUE){
     stop('Verbose must be of type logical.')
   }
 
@@ -89,40 +104,46 @@ ebv_analyse <- function(filepath, datacubepath, entity=NULL, timestep=1,
     stop(paste0('File ending is wrong. File cannot be processed.'))
   }
 
-  #variable check
-  if (checkmate::checkCharacter(datacubepath) != TRUE){
-    stop('Datacubepath must be of type character.')
+  #datacubepath check
+  #1. make sure anything is defined
+  if(is.null(datacubepath) && is.null(scenario) && is.null(metric)){
+    stop('You need to define the datacubepath or the scenario and metric.
+       Regarding the second option: If your EBV netCDF has no scenario,
+       leave the argument empty.')
+  }else if(!is.null(datacubepath)){
+    #2. check datacubepath
+    # open file
+    hdf <- rhdf5::H5Fopen(filepath, flags = "H5F_ACC_RDONLY")
+    if (checkmate::checkCharacter(datacubepath) != TRUE) {
+      stop('Datacubepath must be of type character.')
+    }
+    if (rhdf5::H5Lexists(hdf, datacubepath) == FALSE ||
+        !stringr::str_detect(datacubepath, 'ebv_cube')) {
+      stop(paste0('The given datacubepath is not valid:\n', datacubepath))
+    }
+    #close file
+    rhdf5::H5Fclose(hdf)
+  } else if(!is.null(metric)){
+    #3. check metric&scenario
+    datacubepaths <- ebv_datacubepaths(filepath, verbose=verbose)
+    datacubepath <- ebv_i_datacubepath(scenario, metric,
+                                       datacubepaths, verbose=verbose)
   }
-  hdf <- rhdf5::H5Fopen(filepath, flags = "H5F_ACC_RDONLY")
-  if (rhdf5::H5Lexists(hdf, datacubepath)==FALSE | !stringr::str_detect(datacubepath, 'ebv_cube')){
-    stop(paste0('The given variable is not valid:\n', datacubepath))
-  }
-  rhdf5::H5Fclose(hdf)
 
   #get properties
-  prop <- ebv_properties(filepath, datacubepath, verbose)
+  prop <- ebv_properties(filepath, datacubepath, verbose=verbose)
 
-  #timestep check
-  #check if timestep is valid type
-  if(checkmate::checkIntegerish(timestep) != TRUE){
-    stop('Timestep has to be an integer or a list of integers.')
-  }
-
-  #check timestep range
-  max_time <- prop@spatial$dimensions[3]
-  min_time <- 1
-  if(checkmate::checkIntegerish(timestep, lower=min_time, upper=max_time) != TRUE){
-    stop(paste0('Chosen timestep ', paste(timestep, collapse = ' '), ' is out of bounds. Timestep range is ', min_time, ' to ', max_time, '.'))
-  }
+  #timestep check -> in case of ISO, get index
+  timestep <- ebv_i_date(timestep, prop@temporal$dates)
 
   #check logical arguments
-  if(checkmate::checkLogical(na_rm, len=1, any.missing=F) != TRUE){
+  if(checkmate::checkLogical(na_rm, len=1, any.missing=FALSE) != TRUE){
     stop('na_rm must be of type logical.')
   }
-  if(checkmate::checkLogical(numerical, len=1, any.missing=F) != TRUE){
+  if(checkmate::checkLogical(numerical, len=1, any.missing=FALSE) != TRUE){
     stop('numerical must be of type logical.')
   }
-  if(checkmate::checkLogical(touches, len=1, any.missing=F) != TRUE){
+  if(checkmate::checkLogical(touches, len=1, any.missing=FALSE) != TRUE){
     stop('touches must be of type logical.')
   }
 
@@ -154,7 +175,7 @@ ebv_analyse <- function(filepath, datacubepath, entity=NULL, timestep=1,
   if (is.null(subset)){
     #process whole file + variable+ timestep
     type.short <- ebv_i_type_r(prop@ebv_cube$type)
-    all <- HDF5Array::HDF5Array(filepath = filepath, name =datacubepath, as.sparse = T, type = type.short)
+    all <- HDF5Array::HDF5Array(filepath = filepath, name =datacubepath, as.sparse = TRUE, type = type.short)
     if(is_4D){
       #process 4D
       subset.array <- all[,,timestep,entity_index]
@@ -175,7 +196,8 @@ ebv_analyse <- function(filepath, datacubepath, entity=NULL, timestep=1,
   } else if(endsWith(subset, '.shp')){
     #process shp subset ----
     subset.raster <- ebv_read_shp(filepath, datacubepath, entity=entity,
-                                  shp=subset, timestep=timestep, touches=touches, verbose=verbose)
+                                  shp=subset, timestep=timestep, touches=touches,
+                                  verbose=verbose)
     #raster to array
     subset.array <- terra::as.array(subset.raster)
     #less ram

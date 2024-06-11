@@ -6,12 +6,14 @@
 \usage{
 ebv_analyse(
   filepath,
-  datacubepath,
+  datacubepath = NULL,
   entity = NULL,
   timestep = 1,
   subset = NULL,
   touches = TRUE,
   epsg = 4326,
+  scenario = NULL,
+  metric = NULL,
   numerical = TRUE,
   na_rm = TRUE,
   verbose = TRUE
@@ -20,27 +22,43 @@ ebv_analyse(
 \arguments{
 \item{filepath}{Character. Path to the netCDF file.}
 
-\item{datacubepath}{Character. Path to the datacube (use
-\code{\link[=ebv_datacubepaths]{ebv_datacubepaths()}}).}
+\item{datacubepath}{Character. Optional. Default: NULL. Path to the datacube
+(use \code{\link[=ebv_datacubepaths]{ebv_datacubepaths()}}). Alternatively, you can use the
+scenario and metric argument to define which cube you want to access.}
 
 \item{entity}{Character or Integer. Default is NULL. If the structure is 3D,
 the entity argument is set to NULL. Else, a character string or single
 integer value must indicate the entity of the 4D structure of the EBV
 netCDFs.}
 
-\item{timestep}{Integer. Choose one or several timesteps (vector).}
+\item{timestep}{Integer or character. Select one or several timestep(s).
+Either provide an integer value or list of values that refer(s) to the
+index of the timestep(s) (minimum value: 1) or provide a date or list of
+dates in ISO format, such as '2015-01-01'.}
 
 \item{subset}{Optional if you want measurements on a smaller subset. Possible
 via the path to a shapefile (character) or the indication of a bounding box
 (vector of four numeric values) defining the subset. Else the whole area is
 analysed.}
 
-\item{touches}{Logical. Optional. Default: TRUE. Only relevant if the subset is
-indicated by a shapefile. See \code{\link[=ebv_read_shp]{ebv_read_shp()}}.}
+\item{touches}{Logical. Optional. Default: TRUE. Only relevant if the subset
+is indicated by a shapefile. See \code{\link[=ebv_read_shp]{ebv_read_shp()}}.}
 
 \item{epsg}{Numeric. Optional. Only relevant if the subset is indicated by a
 bounding box and the coordinate reference system differs from WGS84. See
 \code{\link[=ebv_read_bb]{ebv_read_bb()}}.}
+
+\item{scenario}{Character or integer. Optional. Default: NULL. Define the
+scenario you want to access. If the EBV netCDF has no scenarios, leave the
+default value (NULL). You can use an integer value defining the scenario or
+give the name of the scenario as a character string. To check the available
+scenarios and their name or number (integer), use
+\code{\link[=ebv_datacubepaths]{ebv_datacubepaths()}}.}
+
+\item{metric}{Character or integer. Optional. Define the metric you want to
+access. You can use an integer value defining the metric or give the name
+of the scenario as a character string. To check the available metrics and
+their name or number (integer), use \code{\link[=ebv_datacubepaths]{ebv_datacubepaths()}}.}
 
 \item{numerical}{Logical. Default: TRUE. Change to FALSE if the data covered
 by the netCDF contains categorical data.}
@@ -69,18 +87,21 @@ shp_path <- system.file(file.path("extdata","cameroon.shp"), package="ebvcube")
 \donttest{
 #get measurements for full extent and the first three timesteps
 data_global <- ebv_analyse(filepath = file, datacubepath = datacubes[1,1],
-                           entity = 1, timestep = 1:3)
+                           entity = 1, timestep = 1:3, verbose = FALSE)
 
 #get measurements for subset of Africa only (using bounding box) and one timestep
-data_bb_1900 <- ebv_analyse(filepath = file, datacubepath = datacubes[1,1],
-                            entity = 1, timestep = 2, subset = c(-26, 64, 30, 38))
+data_1910 <- ebv_analyse(filepath = file, datacubepath = datacubes[1,1],
+                         entity = 1, timestep = "1900-01-01",
+                         subset = c(-26, 64, 30, 38), verbose = FALSE)
 
 #get measurements for cameroon only (using shp) and one timestep
-data_shp_1900 <- ebv_analyse(filepath = file, datacubepath = datacubes[1,1],
-                             entity = 1, timestep = 3, subset = shp_path)
+data_1930 <- ebv_analyse(filepath = file, entity = 1,
+                         timestep = "1930-01-01",
+                         subset = shp_path, verbose = FALSE,
+                         metric = 'Absolute change in the number of species',)
 }
 }
 \seealso{
-\code{\link[=ebv_read_bb]{ebv_read_bb()}} and \code{\link[=ebv_read_shp]{ebv_read_shp()}}
-for the usage of subsets.
+\code{\link[=ebv_read_bb]{ebv_read_bb()}} and \code{\link[=ebv_read_shp]{ebv_read_shp()}} for the usage
+of subsets.
 }
