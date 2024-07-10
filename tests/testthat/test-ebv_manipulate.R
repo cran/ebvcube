@@ -37,7 +37,7 @@ test_that("test ebv_create, ebv_add_data and ebv_attribute", {
     expect_equal(prop$ebv_domain, 'Terrestrial')
     expect_equal(prop$keywords, "ebv_class: Community composition, ebv_name: Taxonomic/phylogenetic diversity, ebv_domain: Terrestrial, ebv_spatial_scope: Global, ebv_entity_type: Communities, ebv_scenario_classification_name: SSP-RCP")
   }else{
-    ebv_attribute(file, 'ebv_domain', 'Marine')
+    ebv_attribute(file, 'ebv_domain', 'Marine', verbose = FALSE)
     prop <- ebv_properties(file, verbose=FALSE)@general
     expect_equal(prop$ebv_domain, 'Marine')
     expect_equal(prop$keywords, "ebv_class: Community composition, ebv_name: Taxonomic/phylogenetic diversity, ebv_domain: Marine, ebv_spatial_scope: Global, ebv_entity_type: Communities, ebv_scenario_classification_name: SSP-RCP")
@@ -144,7 +144,7 @@ test_that("test ebv_create, ebv_add_data and ebv_attribute", {
   #write tif to netCDF
   ebv_add_data(filepath = file, datacubepath = 'scenario_3/metric_2/ebv_cube',
                entity=1,timestep=1:3, band = 1:3,
-               data=temprast, verbose=FALSE)
+               data=temprast, verbose=FALSE, ignore_RAM = TRUE)
   data <- ebv_read(file, 'scenario_3/metric_2/ebv_cube',1,1:3, 'a', verbose=FALSE)
   expect_equal(data[90,180,3], array[90,180,3])
   expect_equal(data[90,80,2], array[90,80,2])

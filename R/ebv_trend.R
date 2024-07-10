@@ -59,6 +59,8 @@
 ebv_trend <- function(filepath, datacubepath = NULL, entity = NULL, method='mean',
                       subset = NULL, color="dodgerblue4", touches = TRUE,
                       scenario = NULL, metric = NULL, verbose = TRUE){
+  # global vars ----
+  Var3 <- value <- NULL
   # start initial tests ----
   # ensure file and all datahandles are closed on exit
   withr::defer(
@@ -213,7 +215,7 @@ ebv_trend <- function(filepath, datacubepath = NULL, entity = NULL, method='mean
     data.all.raster <- ebv_read_shp(filepath = filepath,
                              datacubepath = datacubepath,
                              entity = entity,
-                             timestep = 1:dims[3],#get all timesteps
+                             timestep = 1:dims[3], #get all timesteps
                              shp = subset,
                              touches = touches,
                              verbose = verbose)
@@ -232,7 +234,7 @@ ebv_trend <- function(filepath, datacubepath = NULL, entity = NULL, method='mean
 
     #data.all
     if(is_4D){
-      data.all <- data.all[,,,entity_index]
+      data.all <- data.all[, , , entity_index]
     }
 
 
@@ -279,14 +281,14 @@ ebv_trend <- function(filepath, datacubepath = NULL, entity = NULL, method='mean
       }
       for (t in 1:time){
         if(verbose){
-          utils::setTxtProgressBar(pb,t)
+          utils::setTxtProgressBar(pb, t)
         }
         f <- tryCatch(
           {
             if(is_4D){
-              data <- data.all[,,t]
+              data <- data.all[, , t]
             }else{
-              data <- data.all[,,t]
+              data <- data.all[, , t]
             }
             if(method=='mean'){
               v <- mean(data, na.rm =TRUE)
@@ -322,7 +324,7 @@ ebv_trend <- function(filepath, datacubepath = NULL, entity = NULL, method='mean
           width = 80
           ), collapse = "\n")) +
         ggplot2::labs(subtitle=label)+
-        ggplot2::ylab(paste0(method, '\n(',units,')')) +
+        ggplot2::ylab(paste0(method, '\n(', units, ')')) +
         ggplot2::theme_classic() +
         ggplot2::geom_line(linetype = "dashed", color=color) +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle=90)) +
@@ -354,7 +356,7 @@ ebv_trend <- function(filepath, datacubepath = NULL, entity = NULL, method='mean
       colnames(dataset) <- 'V1'
 
       #return(dataset)
-      ggp <- ggplot2::ggplot(data = dataset, ggplot2::aes(x=factor(timevalues), y='V1',)) +
+      ggp <- ggplot2::ggplot(data = dataset, ggplot2::aes(x=factor(timevalues), y='V1', )) +
         ggplot2::geom_boxplot(fill=color, outlier.size = 0.7, outlier.shape = 20) +
         ggplot2::ylab(units) +
         ggplot2::xlab('Time') +
@@ -382,7 +384,7 @@ ebv_trend <- function(filepath, datacubepath = NULL, entity = NULL, method='mean
       #rearrange data into data frame
       df <- reshape2::melt(as.array(data.all), na.rm = TRUE)
 
-      ggp <- ggplot2::ggplot(data = df, ggplot2::aes(x=factor(df$Var3), y=df$value)) +
+      ggp <- ggplot2::ggplot(data = df, ggplot2::aes(x=factor(Var3), y=value)) +
         ggplot2::geom_boxplot(fill=color, outlier.size = 0.7, outlier.shape = 20) +
         ggplot2::scale_x_discrete('Time',  breaks=unique(df$Var3), labels= timevalues)+
         ggplot2::ylab(units) +

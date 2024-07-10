@@ -1,3 +1,8 @@
+# ebvcube 0.2.3
+## Bug fixes
+- edit test file for ebv_download: make sure the portal website is up
+- new helper function: ebv_i_check_url
+
 # ebvcube 0.2.1
 ## Bug fixes
 - remove old url of codecov from badge
