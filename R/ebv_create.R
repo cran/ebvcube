@@ -19,8 +19,8 @@
 #'   system via the corresponding epsg code.
 #' @param extent Numeric. Default: c(-180,180,-90,90). Defines the extent of the
 #'   data: c(xmin, xmax, ymin, ymax).
-#' @param fillvalue Numeric. Value of the missing data in the array. Not
-#'   mandatory but should be defined!
+#' @param fillvalue Numeric. Value of the missing data (NoData value) in the
+#'   array. Has to be a single numeric value or NA.
 #' @param prec Character. Default: 'double'. Precision of the data set. Valid
 #'   options: 'short' 'integer' 'float' 'double' 'char' 'byte'.
 #' @param sep Character. Default: ','. If the delimiter of the csv specifying
@@ -66,7 +66,7 @@
 #' }
 ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
                        extent = c(-180, 180, -90, 90), resolution = c(1, 1),
-                       timesteps = NULL, fillvalue = NULL, prec = 'double',
+                       timesteps = NULL, fillvalue, prec = 'double',
                        sep=',', force_4D = TRUE, overwrite = FALSE,
                        verbose = TRUE){
   # start initial tests ----
@@ -131,6 +131,9 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
   }
   if(missing(entities)){
     stop('Entities argument is missing.')
+  }
+  if(missing(fillvalue)){
+    stop('Fillvalue argument is missing.')
   }
 
   #turn off local warnings if verbose=TRUE
@@ -242,10 +245,8 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
   }
 
   #check fillvalue
-  if (! is.null(fillvalue)){
-    if(checkmate::checkNumber(fillvalue) != TRUE && !is.na(fillvalue)){
+  if(checkmate::checkNumber(fillvalue) != TRUE && !is.na(fillvalue)){
       stop('The fillvalue needs to be a single numeric value or NA.')
-    }
   }
 
   #check resolution
@@ -711,6 +712,7 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
 
   # global attributes ----
   #static attributes
+  ebv_i_char_att(hdf, 'doi', 'pending')
   ebv_i_char_att(hdf, 'Conventions', 'CF-1.8, ACDD-1.3, EBV-1.0')
   ebv_i_char_att(hdf, 'naming_authority', 'The German Centre for Integrative Biodiversity Research (iDiv) Halle-Jena-Leipzig')
   ebv_i_char_att(hdf, 'date_issued', 'pending')
@@ -772,7 +774,7 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
   ebv_i_char_att(hdf, 'keywords', keywords)
 
   #add global.att to netcdf
-  for (i in 1:length(global.att)){
+  for (i in seq_along(global.att)){
     att.txt <- eval(parse(text = paste0('json$', global.att[i][[1]])))
     att.txt <- paste0(trimws(att.txt), collapse = ', ')
     if(names(global.att[i])=='contributor_name' || names(global.att[i])=='ebv_domain'){
@@ -973,7 +975,7 @@ ebv_create <- function(jsonpath, outputpath, entities, epsg = 4326,
   # add values to 'entity' var ----
   # string-valued auxiliary coordinate variable
   entity.values <- c()
-  for (i in 1:length(entity_csv[, 1])){
+  for (i in seq_along(entity_csv[, 1])){
     new_values <- stringr::str_split(entity_csv[i, 1], '')[[1]]
     if (length(new_values)<max_char){
       for (i in 1:(max_char - length(new_values))){

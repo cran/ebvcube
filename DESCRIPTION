@@ -1,7 +1,7 @@
 Package: ebvcube
 Title: Working with netCDF for Essential Biodiversity Variables
-Version: 0.2.3
-Date: 2024-07-10
+Version: 0.3.1
+Date: 2024-12-05
 Authors@R: 
     c(person(given = "Luise",
            family = "Quoss",
@@ -40,21 +40,21 @@ Description: The concept of Essential Biodiversity Variables (EBV, <https://geob
     The 'ebvcube' 'R' package provides functionality to easily create, access and 
     visualise this data. The EBV netCDFs can be downloaded from the EBV Data 
     Portal: Christian Langer/ iDiv (2020) <https://portal.geobon.org/>. 
-URL: https://github.com/LuiseQuoss/ebvcube
-BugReports: https://github.com/LuiseQuoss/ebvcube/issues
+URL: https://github.com/EBVCube/ebvcube
+BugReports: https://github.com/EBVcube/ebvcube/issues
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 biocViews:
 Imports: checkmate, curl, DelayedArray, ggplot2, HDF5Array, httr,
         jsonlite, memuse, methods, ncdf4, ncmeta, reshape2, rhdf5,
         stringr, terra, tidyterra, withr
-Suggests: knitr, rmarkdown, testthat (>= 3.0.0)
+Suggests: knitr, lintr, rmarkdown, testthat (>= 3.0.0)
 SystemRequirements: GDAL binaries
 Depends: R (>= 4.2.0)
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2024-07-10 11:31:04 UTC; lq39quba
+Packaged: 2024-12-05 13:34:49 UTC; lq39quba
 Repository: CRAN
-Date/Publication: 2024-07-10 12:00:03 UTC
+Date/Publication: 2024-12-05 13:50:03 UTC

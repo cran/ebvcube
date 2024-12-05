@@ -1,16 +1,17 @@
 #' EBV netCDF properties class (S4)
 #'
-#' @slot general Named list. Elements: title, description, ebv_class, ebv_name,
-#'   ebv_domain, references, source, project_name, project_url, creator_name,
-#'   creator_institution, creator_email, contributor_name, publisher_name,
-#'   publisher_institution, publisher_email, comment, keywords, id, history,
-#'   licence, conventions, naming_authority, date_created, date_issued,
-#'   entity_names, entity_type, entity_scope, entity_classification_name,
-#'   entity_classification_url, taxonomy, taxonomy_lsid
+#' @slot general Named list. Elements: title, description, doi, ebv_class,
+#'   ebv_name, ebv_domain, references, source, project_name, project_url,
+#'   creator_name, creator_institution, creator_email, contributor_name,
+#'   publisher_name, publisher_institution, publisher_email, comment, keywords,
+#'   id, history, licence, conventions, naming_authority, date_created,
+#'   date_issued, entity_names, entity_type, entity_scope,
+#'   entity_classification_name, entity_classification_url, taxonomy,
+#'   taxonomy_lsid
 #' @slot spatial Named list. Elements: wkt2, epsg, extent, resolution,
 #'   crs_units, dimensions, scope, description
 #' @slot temporal Named list. Elements: resolution, units, timesteps, dates
-#' @slot metric Named list. Elements: name, description
+#' @slot metric Named list. Elements: name, description, units
 #' @slot scenario Named list. Elements: name, description
 #' @slot ebv_cube Named list. Elements: units, coverage_content_type, fillvalue,
 #'   type
@@ -68,12 +69,12 @@ methods::setClass(
 #' datacubes <- ebv_datacubepaths(file, verbose=FALSE)
 #'
 #' #get properties only for the file
-#' prop_file <- ebv_properties(file)
+#' prop_file <- ebv_properties(file, verbose=FALSE)
 #' #get properties for the file and a specific datacube - use datacubepath
-#' prop_dc <- ebv_properties(file, datacubepath = datacubes[1,1])
+#' prop_dc <- ebv_properties(file, datacubepath = datacubes[1,1], verbose=FALSE)
 #' #get properties for the file and a specific datacube - use scenario & metric
 #' #note: this dataset has no scenario -> only metric is defined
-#' prop_dc <- ebv_properties(file, metric = 2)
+#' prop_dc <- ebv_properties(file, metric = 2, verbose=FALSE)
 ebv_properties <-
   function(filepath,
            datacubepath = NULL,
@@ -122,9 +123,9 @@ ebv_properties <-
 
     #datacubepath check
     #1. make sure anything is defined
-    if(is.null(datacubepath) && is.null(scenario) && is.null(metric)){
+    if(is.null(datacubepath) && is.null(metric)){
       if(verbose){
-        print('Giving the properties for the file. For more info on a specific datacube, define the metric and scenario OR datacubepath.')
+        print('Giving the properties for the file. For more info on a specific datacube, define the metric (and scenario) OR datacubepath.')
       }
       # open file
       hdf <- rhdf5::H5Fopen(filepath, flags = "H5F_ACC_RDONLY")
@@ -197,6 +198,7 @@ ebv_properties <-
 
     #general ----
     # add entity names to global properties
+    doi <- ebv_i_read_att(hdf, 'doi', verbose)
     title <- ebv_i_read_att(hdf, 'title', verbose)
     description <- ebv_i_read_att(hdf, 'summary', verbose)
     references <- ebv_i_read_att(hdf, 'references', verbose)
@@ -313,6 +315,7 @@ ebv_properties <-
       list(
         'title' = title,
         'description' = description,
+        'doi' = doi,
         'ebv_class' = ebv_class,
         'ebv_name' = ebv_name,
         'ebv_domain' = ebv_domain,
@@ -400,8 +403,9 @@ ebv_properties <-
         gid <- rhdf5::H5Gopen(hdf, path_m)
         name_m <- ebv_i_read_att(gid, 'standard_name', verbose)
         description_m <- ebv_i_read_att(gid, 'long_name', verbose)
+        units_m <- ebv_i_read_att(gid, 'units', verbose)
         rhdf5::H5Gclose(gid)
-        metric <- list('name' = name_m, 'description' = description_m)
+        metric <- list('name' = name_m, 'description' = description_m, 'units' = units_m)
 
       } else{
         # 2. metric only----
@@ -411,8 +415,9 @@ ebv_properties <-
         gid <- rhdf5::H5Gopen(hdf, path_m)
         name_m <- ebv_i_read_att(gid, 'standard_name', verbose)
         description_m <- ebv_i_read_att(gid, 'long_name', verbose)
+        units_m <- ebv_i_read_att(gid, 'units', verbose)
         rhdf5::H5Gclose(gid)
-        metric <- list('name' = name_m, 'description' = description_m)
+        metric <- list('name' = name_m, 'description' = description_m, 'units' = units_m)
       }
 
       #cube info ----

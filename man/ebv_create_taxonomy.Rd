@@ -13,7 +13,7 @@ ebv_create_taxonomy(
   extent = c(-180, 180, -90, 90),
   resolution = c(1, 1),
   timesteps = NULL,
-  fillvalue = NULL,
+  fillvalue,
   prec = "double",
   sep = ",",
   force_4D = TRUE,
@@ -60,8 +60,8 @@ and temporal resolution given in the metadata file (json). Else, the dates
 must be given in in ISO format 'YYYY-MM-DD' or shortened 'YYYY' in case of
 yearly timesteps.}
 
-\item{fillvalue}{Numeric. Value of the missing data in the array. Not
-mandatory but should be defined!}
+\item{fillvalue}{Numeric. Value of the missing data (NoData value) in the
+array. Has to be a single numeric value or NA.}
 
 \item{prec}{Character. Default: 'double'. Precision of the data set. Valid
 options: 'short' 'integer' 'float' 'double' 'char' 'byte'.}
@@ -80,9 +80,7 @@ information per metric. In the future the standard will be restricted to the
 file defined by 'outputpath'}
 
 \item{verbose}{Logical. Default: TRUE. Turn off additional prints by setting
-it to FALSE. #' @note To check out the results take a look at your netCDF
-file with \href{https://www.giss.nasa.gov/tools/panoply/}{Panoply} provided
-by the NASA.}
+it to FALSE.}
 }
 \value{
 Creates the netCDF file at the 'outputpath' location including the
@@ -97,8 +95,12 @@ if your dataset holds no taxonomic information. Data will be added
 afterwards using \code{\link[=ebv_add_data]{ebv_add_data()}}.
 }
 \note{
-You can check the taxonomy info with \code{\link[=ebv_properties]{ebv_properties()}} in the slot
-'general' under the name 'taxonomy' and 'taxonomy_lsid'.
+To check out the results take a look at your netCDF file with
+\href{https://www.giss.nasa.gov/tools/panoply/}{Panoply} provided by the
+NASA.
+
+You can check the taxonomy info with \code{\link[=ebv_properties]{ebv_properties()}} in the
+slot 'general' under the name 'taxonomy' and 'taxonomy_lsid'.
 }
 \examples{
 #set path to JSON file

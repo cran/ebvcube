@@ -48,6 +48,7 @@ test_that("test ebv_create_taxonomy no lsid", {
   expect_equal(trimws(paste0(entity_levels.id[1,], collapse = '')), "binomial")
   expect_equal(trimws(paste0(entity_levels.id[2,], collapse = '')), "family")
   expect_equal(trimws(paste0(entity_levels.id[3,], collapse = '')), "order")
+  expect_equal(rhdf5::H5Aexists(entity_levels.id, 'rhdf5-NA.OK'), FALSE)
   rhdf5::H5Dclose(entity_levels.id)
 
   rhdf5::H5Fclose(hdf)
@@ -113,6 +114,7 @@ test_that("test ebv_create_taxonomy with lsid", {
   expect_equal(rhdf5::H5Lexists(hdf, 'entity_lsid'), TRUE)
   entity_lsid.id <- rhdf5::H5Dopen(hdf, 'entity_lsid')
   expect_equal(trimws(paste0(entity_lsid.id[1,], collapse = '')), "10125")
+  expect_equal(rhdf5::H5Aexists(entity_lsid.id, 'rhdf5-NA.OK'), FALSE)
   rhdf5::H5Dclose(entity_lsid.id)
 
   #taxon level names
@@ -120,8 +122,20 @@ test_that("test ebv_create_taxonomy with lsid", {
   expect_equal(trimws(paste0(entity_levels.id[1,], collapse = '')), "binomial")
   expect_equal(trimws(paste0(entity_levels.id[2,], collapse = '')), "family")
   expect_equal(trimws(paste0(entity_levels.id[3,], collapse = '')), "order")
+  expect_equal(rhdf5::H5Aexists(entity_levels.id, 'rhdf5-NA.OK'), FALSE)
   rhdf5::H5Dclose(entity_levels.id)
 
+  #test ebv_i_p
+  did_list <- rhdf5::H5Dopen(hdf, 'entity_list')
+  did_list_data <- rhdf5::H5Dread(did_list)
+  rhdf5::H5Dclose(did_list)
+  values <- c("Hipposideridae", "Cheirogaleidae", "Echimyidae", "Procyonidae", "Rhinolophidae", "Phyllostomidae",
+              "Vespertilionidae","Rhinolophidae",   "Phyllostomidae",  "Muridae",
+              "Pteropodidae",     "Echimyidae",      "Phalangeridae",   "Soricidae",       "Cricetidae",
+              "Soricidae", "Ctenomyidae",     "Phyllostomidae",  "Emballonuridae",  "Callitrichidae",
+              "Cricetidae",      "Geomyidae",       "Molossidae",      "Dipodidae",       "Bovidae",
+              "Molossidae",      "Tarsiidae",       "Macropodidae",    "Cercopithecidae", "Muridae")
+  expect_equal(apply(did_list_data[2, , ], 1, ebv_i_p),values)
   rhdf5::H5Fclose(hdf)
 
   #test ebv_properties taxonomy

@@ -38,6 +38,9 @@
 #'   your memory to read the data. Can be switched off (set to TRUE). Ignore
 #'   this argument when you give an array or a matrix for 'data' (it will do
 #'   nothing).
+#' @param raw Logical. Default: FALSE. If you set it to TRUE the offset and
+#'   scale value in the GeoTiff are ignored. Only relevant if you give a path to
+#'   a GeoTiff.
 #' @param verbose Logical. Default: TRUE. Turn off additional prints by setting
 #'   it to FALSE.
 #'
@@ -72,7 +75,7 @@
 #' }
 ebv_add_data <- function(filepath_nc, datacubepath = NULL, entity = NULL, timestep = 1,
                          data, band = 1, scenario = NULL, metric = NULL,
-                         ignore_RAM = FALSE, verbose = TRUE){
+                         ignore_RAM = FALSE, raw = FALSE, verbose = TRUE){
   ### start initial tests ----
   # ensure file and all datahandles are closed on exit
   withr::defer(
@@ -173,7 +176,7 @@ ebv_add_data <- function(filepath_nc, datacubepath = NULL, entity = NULL, timest
         !stringr::str_detect(datacubepath, 'ebv_cube')) {
       stop(paste0('The given datacubepath is not valid:\n', datacubepath))
     }
-    #close file
+    #close the file
     rhdf5::H5Fclose(hdf)
   } else if(!is.null(metric)){
     #3. check metric&scenario
@@ -305,7 +308,7 @@ ebv_add_data <- function(filepath_nc, datacubepath = NULL, entity = NULL, timest
   if(character){
 
     #open tif file, get raster data
-    raster <- terra::rast(data)[[band]]
+    raster <- terra::rast(data, raw = raw)[[band]]
 
     #transform into array/matrix----
     if (length(timestep) > 1){
@@ -320,6 +323,7 @@ ebv_add_data <- function(filepath_nc, datacubepath = NULL, entity = NULL, timest
 
   #set dim of dataset ----
   did <- rhdf5::H5Dopen(hdf, datacubepath)
+  fillvalue <- ebv_i_read_att(did, '_FillValue', FALSE)
   file_space <- rhdf5::H5Dget_space(did)
   if (rhdf5::H5Sget_simple_extent_dims(file_space)$size[3] != dims[3]){
     #set new dimension of dataset
@@ -332,8 +336,13 @@ ebv_add_data <- function(filepath_nc, datacubepath = NULL, entity = NULL, timest
   }
 
 
-  #think about replacing NaN with NA -> weird errors -> check again if this bug is real!
-  data[is.nan(data)] <- NA
+  #assure the FillValue
+  if(any(is.na(data))){
+    data[is.na(data)] <- fillvalue
+  }
+  if(any(is.nan(data))){
+    data[is.nan(data)] <- fillvalue
+  }
 
   #write data ----
 
