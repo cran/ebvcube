@@ -1,7 +1,7 @@
 Package: ebvcube
 Title: Working with netCDF for Essential Biodiversity Variables
-Version: 0.3.1
-Date: 2024-12-05
+Version: 0.3.3
+Date: 2024-12-16
 Authors@R: 
     c(person(given = "Luise",
            family = "Quoss",
@@ -55,6 +55,6 @@ SystemRequirements: GDAL binaries
 Depends: R (>= 4.2.0)
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2024-12-05 13:34:49 UTC; lq39quba
+Packaged: 2024-12-17 09:48:49 UTC; lq39quba
 Repository: CRAN
-Date/Publication: 2024-12-05 13:50:03 UTC
+Date/Publication: 2024-12-17 10:20:06 UTC

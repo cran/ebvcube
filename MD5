@@ -1,6 +1,6 @@
-c1d4d3977f8e51f1c8287b1a12d3b858 *DESCRIPTION
+6b6c3da99dc0141bbcfb9f95b681cd2e *DESCRIPTION
 361fe031385fefe0abc0f2e217472011 *NAMESPACE
-e3d6042a451ca0c1bdcb8a8b15ab26b7 *NEWS.md
+f6a429d3234c2b3bdfedc2d0d3001da3 *NEWS.md
 ecb1b5e9438f509f07531b0548b88237 *R/data.R
 3c258cb4bc0242f82e16684c5c588157 *R/ebv_add_data.R
 e7486528bd6a16aad1998657d7647f1c *R/ebv_analyse.R
@@ -19,12 +19,11 @@ b09caae777cf005605cc7cf39d822258 *R/ebv_download.R
 54b9ded49c12f8a4b26c3a530bd6aeac *R/ebv_trend.R
 fc2ab526e047964ae3c4ea2395555c40 *R/ebv_utils.R
 323d093276ea544e49b73e942e569b0f *R/ebv_write.R
-5029e4bd6a7a38198ab4666b1bc11116 *R/ebvcube-package.R
-149a745502add07ebfe79063e9434389 *README.md
+dc7fea699c9f4fc9fbd1b705cf2e2db9 *R/ebvcube-package.R
+6eb5d217d2b8a7d8936be32202371ed3 *README.md
 7b78f344e312f095412226b085b6a878 *data/world_boundaries.rda
 829b8fe55fbf02eddf6a60c3dc3ed371 *inst/CITATION
-8392428441283f8f7a77a21a9847d1f6 *inst/docs/ebvcube_0.2.2.pdf
-6ce42e0ddcdc91b3980e86818446594f *inst/docs/ebvcube_0.3.1.pdf
+cea0e20940145cdf4fcf544ce1aed7eb *inst/docs/ebvcube_0.3.3.pdf
 9fc7dca0031013e0ece5008e6c0f4911 *inst/extdata/baisero_spepop_id5_20220405_v1_empty.nc
 ae3b3df9970b49b6523e608759bc957d *inst/extdata/cameroon.cpg
 b6cb705ca413329da27a577cfb2c2712 *inst/extdata/cameroon.dbf
@@ -73,7 +72,7 @@ df4ea9d43bec7f0c89523e22881d8f03 *man/ebv_read_shp.Rd
 dba1b6a5efd973097d191a1a8eb6ffd0 *man/ebv_resample.Rd
 717cbe155442207131fdf03974ed3bed *man/ebv_trend.Rd
 b79711b0596b18ea03495f4f82a900f7 *man/ebv_write.Rd
-1324c12a06419a566ca8138307950c9e *man/ebvcube.Rd
+b59b2a7fd593f56a2e1d1ef031d65aca *man/ebvcube.Rd
 25ee48377ea8cb2bdc49e94d952c6852 *man/figures/README-unnamed-chunk-4-1.png
 a73e178d47a90a1782ea16c799b5f27c *man/figures/README-unnamed-chunk-4-2.png
 69144a118bba916368cfa4252336c5e6 *man/figures/README-unnamed-chunk-5-1.png
@@ -92,7 +91,7 @@ af63d232959a6e168eb4782c1c457bba *tests/testthat/test-ebv-read.R
 7c0e6d21ebdd423c1e9b0a45e8f07b4a *tests/testthat/test-ebv_manipulate.R
 3c93c8b1d3203f373c9f9d8f7aa3b75a *tests/testthat/test-ebv_metadata.R
 12a03614d8cee2e44aa377ba183f0f70 *tests/testthat/test-ebv_properties.R
-bcabdad01af05b55ff8a2cbe9eaaaf57 *tests/testthat/test-ebv_utils.R
+afdb76c838554ec7dd0a678ba70ed6f3 *tests/testthat/test-ebv_utils.R
 289056100cce61bd4e02d23d80941fd3 *tests/testthat/test-lintr.R
 b970790016b609a9e6fc66a019d2dee0 *tests/testthat/test-plots.R
 2f09f57e2abf1654d177845f3c265cbf *tests/testthat/test-resample.R
