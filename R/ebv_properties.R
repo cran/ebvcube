@@ -2,15 +2,16 @@
 #'
 #' @slot general Named list. Elements: title, description, doi, ebv_class,
 #'   ebv_name, ebv_domain, references, source, project_name, project_url,
-#'   creator_name, creator_institution, creator_email, contributor_name,
-#'   publisher_name, publisher_institution, publisher_email, comment, keywords,
-#'   id, history, licence, conventions, naming_authority, date_created,
-#'   date_issued, entity_names, entity_type, entity_scope,
-#'   entity_classification_name, entity_classification_url, taxonomy,
-#'   taxonomy_lsid
+#'   creator_name, creator_institution, creator_email, creator_url,
+#'   contributor_name, publisher_name, publisher_institution, publisher_email,
+#'   publisher_url, comment, keywords, id, history, licence, conventions,
+#'   naming_authority, date_created, date_issued, entity_names, entity_type,
+#'   entity_scope, entity_classification_name, entity_classification_url,
+#'   taxonomy, taxonomy_lsid, date_modified, date_metadata_modified
 #' @slot spatial Named list. Elements: wkt2, epsg, extent, resolution,
 #'   crs_units, dimensions, scope, description
-#' @slot temporal Named list. Elements: resolution, units, timesteps, dates
+#' @slot temporal Named list. Elements: resolution, units, timesteps, dates,
+#'   time_coverage_start, time_coverage_end
 #' @slot metric Named list. Elements: name, description, units
 #' @slot scenario Named list. Elements: name, description
 #' @slot ebv_cube Named list. Elements: units, coverage_content_type, fillvalue,
@@ -209,6 +210,7 @@ ebv_properties <-
     creator_institution <-
       ebv_i_read_att(hdf, 'creator_institution', verbose)
     creator_email <- ebv_i_read_att(hdf, 'creator_email', verbose)
+    creator_url <- ebv_i_read_att(hdf, 'creator_url', verbose)
     contributor_name <-
       ebv_i_read_att(hdf, 'contributor_name', verbose)
     publisher_name <- ebv_i_read_att(hdf, 'publisher_name', verbose)
@@ -216,6 +218,7 @@ ebv_properties <-
       ebv_i_read_att(hdf, 'publisher_institution', verbose)
     publisher_email <-
       ebv_i_read_att(hdf, 'publisher_email', verbose)
+    publisher_url <- ebv_i_read_att(hdf, 'publisher_url', verbose)
     comment <- ebv_i_read_att(hdf, 'comment', verbose)
     ebv_class <- ebv_i_read_att(hdf, 'ebv_class', verbose)
     ebv_name <- ebv_i_read_att(hdf, 'ebv_name', verbose)
@@ -229,6 +232,10 @@ ebv_properties <-
     date_created <- ebv_i_read_att(hdf, 'date_created', verbose)
     date_issued <- ebv_i_read_att(hdf, 'date_issued', verbose)
     licence <- ebv_i_read_att(hdf, 'license', verbose)
+    time_coverage_start <- ebv_i_read_att(hdf, 'time_coverage_start', verbose)
+    time_coverage_end <- ebv_i_read_att(hdf, 'time_coverage_end', verbose)
+    date_modified <- ebv_i_read_att(hdf, 'date_modified', verbose)
+    date_metadata_modified <- ebv_i_read_att(hdf, 'date_metadata_modified', verbose)
 
     #entities info
     did <- rhdf5::H5Dopen(hdf, 'entity')#HERE
@@ -265,10 +272,10 @@ ebv_properties <-
     #resolution <- c(resolution, ebv_i_read_att(hdf, 'geospatial_lat_resolution'))
 
     #global spatial atts
-    ebv_spatial_scope <-
-      ebv_i_read_att(hdf, 'ebv_spatial_scope', verbose)
-    ebv_spatial_description <-
-      ebv_i_read_att(hdf, 'ebv_spatial_description', verbose)
+    ebv_geospatial_scope <-
+      ebv_i_read_att(hdf, 'ebv_geospatial_scope', verbose)
+    ebv_geospatial_description <-
+      ebv_i_read_att(hdf, 'ebv_geospatial_description', verbose)
 
     #get dims
     if (ebv_i_4D(filepath)) {
@@ -326,10 +333,12 @@ ebv_properties <-
         'creator_name' = creator_name,
         'creator_institution' = creator_institution,
         'creator_email' = creator_email,
+        'creator_url' = creator_url,
         'contributor_name' = contributor_name,
         'publisher_name' = publisher_name,
         'publisher_institution' = publisher_institution,
         'publisher_email' = publisher_email,
+        'publisher_url' = publisher_url,
         'comment' = comment,
         'keywords' = keywords,
         'id' = id,
@@ -339,6 +348,8 @@ ebv_properties <-
         'naming_authority' = naming_authority,
         'date_created' = date_created,
         'date_issued' = date_issued,
+        'date_metadata_modified' = date_metadata_modified,
+        'date_modified' = date_modified,
         'entity_names' = entity_names,
         'entity_type' = ebv_entity_type,
         'entity_scope' = ebv_entity_scope,
@@ -355,15 +366,17 @@ ebv_properties <-
         'resolution' = resolution,
         'crs_units' = crs_units,
         'dimensions' = dims,
-        'scope' = ebv_spatial_scope,
-        'description' = ebv_spatial_description
+        'scope' = ebv_geospatial_scope,
+        'description' = ebv_geospatial_description
       )
     temporal <- list(
       'resolution' = t_res,
       'units' = t_units,
       'timesteps' = time_data,
-      'dates' = time_natural
-    )
+      'dates' = time_natural,
+      'time_coverage_start' = time_coverage_start,
+      'time_coverage_end' = time_coverage_end
+      )
 
     # FILE AND DATACUBE ----
     if (!is.null(datacubepath)) {
@@ -465,7 +478,6 @@ ebv_properties <-
       scenario = scenario,
       ebv_cube = ebv_cube
     )
-
 
     #close file
     rhdf5::H5Fclose(hdf)

@@ -104,7 +104,8 @@ ebv_create_taxonomy <- function(jsonpath, outputpath, taxonomy, lsid=FALSE,
       }
     }
   )
-  dids <- c('crs.id', 'lat.id', 'lon.id', 'time.id', 'did', 'entity.id')
+  dids <- c('crs.id', 'lat.id', 'lon.id', 'time.id', 'did', 'entity.id',
+            'ent_list_did', 'ent_level_did', 'lsid_did')
   withr::defer(
     for (id in dids){
       if(exists(id)){
@@ -773,11 +774,13 @@ ebv_create_taxonomy <- function(jsonpath, outputpath, taxonomy, lsid=FALSE,
     global.att['creator_name'] <- 'creator$creator_name'
     global.att['creator_institution'] <- 'creator$creator_institution'
     global.att['creator_email'] <- 'creator$creator_email'
+    global.att['creator_url'] <- 'creator$creator_url'
     global.att['license'] <- 'license'
     global.att['contributor_name'] <- 'contributor_name'
     global.att['publisher_name'] <- 'publisher$publisher_name'
     global.att['publisher_institution'] <- 'publisher$publisher_institution'
     global.att['publisher_email'] <- 'publisher$publisher_email'
+    global.att['publisher_url'] <- 'publisher$publisher_url'
     global.att['comment'] <- 'comment'
     global.att['ebv_class']<-'ebv$ebv_class'
     global.att['ebv_name']<-'ebv$ebv_name'
@@ -817,6 +820,15 @@ ebv_create_taxonomy <- function(jsonpath, outputpath, taxonomy, lsid=FALSE,
     }
     ebv_i_char_att(hdf, names(global.att[i]), att.txt)
   }
+
+  #add date_modified and date_metadata_modified
+  ebv_i_char_att(hdf, 'date_modified', json$date_created)
+  ebv_i_char_att(hdf, 'date_metadata_modified', json$date_created)
+  # #add product version
+  # product_version <- stringr::str_split(stringr::str_remove(basename(jsonpath), '.json'), '_')[[1]][2]
+  # if(is.na(product_version)){
+  #   product_version <- 'v1'
+  # }
 
   #double check id - final jsons don't have 'preliminary_id' att
   id <- json$preliminary_id
@@ -1152,6 +1164,12 @@ ebv_create_taxonomy <- function(jsonpath, outputpath, taxonomy, lsid=FALSE,
     }
     rhdf5::H5Dclose(lsid_did)
   }
+  #entity_list
+  ent_list_did <- rhdf5::H5Dopen(hdf, 'entity_list')
+  if(rhdf5::H5Aexists(ent_list_did, 'rhdf5-NA.OK')){
+    rhdf5::H5Adelete(ent_list_did, 'rhdf5-NA.OK')
+  }
+  rhdf5::H5Dclose(ent_list_did)
 
   # close file 2 ----
   rhdf5::H5Fclose(hdf)
