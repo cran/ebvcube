@@ -729,6 +729,11 @@ ebv_i_datacubepath <- function(scenario=NULL, metric, datacubepaths, verbose){
   }
 
   #check scenario definition----
+  if(!is.null(scenario)){
+    if(is.na(scenario)){
+      stop('The scenario argument cannot be NA. It must either be of type character, a simple integer or  NULL (if the dataset has no scenario).')
+    }
+  }
 
   if(!(checkmate::checkCharacter(scenario)==TRUE || is.null(scenario) || checkmate::checkIntegerish(scenario, len=1) == TRUE)){
     #check if scenario matches any of the allowed types
@@ -795,7 +800,7 @@ ebv_i_datacubepath <- function(scenario=NULL, metric, datacubepaths, verbose){
   }
 
   #check metric definition----
-  if(!(checkmate::checkCharacter(metric)==TRUE || checkmate::checkIntegerish(metric, len=1) == TRUE)){
+  if(!(checkmate::checkCharacter(metric)==TRUE || checkmate::checkIntegerish(metric, len=1) == TRUE) || is.na(metric)){
     stop('The metric argument must be of type character.')
 
   } else if(checkmate::checkIntegerish(metric, len=1) == TRUE){
@@ -884,6 +889,7 @@ ebv_i_datacubepath <- function(scenario=NULL, metric, datacubepaths, verbose){
 #' @return Returns a character array
 #' @noRd
 ebv_i_char_variable <- function(string_vector, max_char, reverse=FALSE){
+  string_vector[is.na(string_vector)] <- ''
   data_level <- as.data.frame(stringr::str_split(stringr::str_pad(string_vector, max_char, side = c("right")), ''))
   data_level <- t(data_level)
   if(reverse){

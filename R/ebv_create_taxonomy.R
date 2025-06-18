@@ -711,7 +711,7 @@ ebv_create_taxonomy <- function(jsonpath, outputpath, taxonomy, taxonomy_key=FAL
   }
 
   #add entities variable ----
-  max_char_entity <- max(apply(csv_txt, 2, function(x) max(nchar(x))))
+  max_char_entity <- max(apply(csv_txt, 2, function(x) max(nchar(x))), na.rm=TRUE)
   dimchar_entity <- ncdf4::ncdim_def("nchar", "", 1:max_char_entity, create_dimvar=FALSE)
   #entity
   var_list_nc[[enum]] <- ncdf4::ncvar_def(name = 'entity', unit='1', #HERE adimensional
@@ -1184,6 +1184,21 @@ ebv_create_taxonomy <- function(jsonpath, outputpath, taxonomy, taxonomy_key=FAL
   rhdf5::H5Dclose(ent_list_did)
 
   # close file 2 ----
+  rhdf5::H5Fclose(hdf)
+
+  #set dim of all ebvcubes ----
+  #get all cube paths
+  paths <- ebv_datacubepaths(outputpath)$datacubepaths
+  #open again
+  hdf <- rhdf5::H5Fopen(outputpath)
+  for(path in paths){
+    did <- rhdf5::H5Dopen(hdf, path)
+    #set new dimension of dataset
+    rhdf5::H5Dset_extent(did, c(length(lon_data), length(lat_data), length(timesteps), entities_no))
+    rhdf5::H5Dclose(did)
+  }
+
+  # close file 3 ----
   rhdf5::H5Fclose(hdf)
 
 
