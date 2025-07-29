@@ -1,12 +1,16 @@
 Package: ebvcube
 Title: Working with netCDF for Essential Biodiversity Variables
-Version: 0.5.1
-Date: 2025-06-18
+Version: 0.5.2
+Date: 2025-06-30
 Authors@R: 
-    c(person(given = "Luise",
-           family = "Quoss",
+    c(person(given = "Emmanuel",
+           family = "Oceguera Conchas",
            role = c("aut", "cre"),
-           email = "luise.quoss@idiv.de",
+           email = "e.oceguera@idiv.de",
+           comment = c(ORCID = "0009-0008-0107-9298")),
+    person(given = "Luise",
+           family = "Quoss",
+           role = c("aut"),
            comment = c(ORCID = "0000-0002-9910-1252")),
     person(given = "Nestor",
            family = "Fernandez",
@@ -29,13 +33,15 @@ Authors@R:
            email = "henrique.pereira@idiv.de",
            comment = c(ORCID = "0000-0003-1043-1675"))
            )
-Author: Luise Quoss [aut, cre] (ORCID: <https://orcid.org/0000-0002-9910-1252>),
+Author: Emmanuel Oceguera Conchas [aut, cre] (ORCID:
+    <https://orcid.org/0009-0008-0107-9298>),
+  Luise Quoss [aut] (ORCID: <https://orcid.org/0000-0002-9910-1252>),
   Nestor Fernandez [aut] (ORCID: <https://orcid.org/0000-0002-9645-8571>),
   Christian Langer [aut] (ORCID: <https://orcid.org/0000-0003-1446-3527>),
   Jose Valdez [aut] (ORCID: <https://orcid.org/0000-0003-2690-9952>),
   Henrique Miguel Pereira [aut] (ORCID:
     <https://orcid.org/0000-0003-1043-1675>)
-Maintainer: Luise Quoss <luise.quoss@idiv.de>
+Maintainer: Emmanuel Oceguera Conchas <e.oceguera@idiv.de>
 Description: The concept of Essential Biodiversity Variables (EBV, <https://geobon.org/ebvs/what-are-ebvs/>) 
     comes with a data structure based on the Network Common Data Form (netCDF). 
     The 'ebvcube' 'R' package provides functionality to easily create, access and 
@@ -56,6 +62,6 @@ SystemRequirements: GDAL binaries
 Depends: R (>= 4.2.0)
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2025-06-18 14:42:13 UTC; lq39quba
+Packaged: 2025-07-29 11:39:00 UTC; lq39quba
 Repository: CRAN
-Date/Publication: 2025-06-18 15:00:02 UTC
+Date/Publication: 2025-07-29 19:20:15 UTC

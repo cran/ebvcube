@@ -1,10 +1,23 @@
+# ebvcube 0.5.2
+
+## Bug fixes
+
+-   ebv_create_taxonomy: change 'ebv_spatial\_\*' to 'ebv_geospatial\_\*'
+-   ebv_create_taxonomy: if entity names are NA in the CSV throw error
+
+## Minor changes
+
+-   ebv_create_taxonomy: update help page regarding taxonomy-key
+-   changed package maintainer
+
 # ebvcube 0.5.1
 
 ## Minor changes
 
--   ebv_create(_taxonomy): allocate space in cubes during creation, not in in ebv_add_data
+-   ebv_create(\_taxonomy): allocate space in cubes during creation, not in in ebv_add_data
 
 ## Bug fixes
+
 -   ebv_create_taxonomy: remove bug in max_char_entity (remove NA)
 -   ebv_i_utils: remove NA from the char-vectors (taxonomy)
 -   ebv_i_datacubepath: error if scenario or metric are NA
@@ -24,7 +37,6 @@
 ## Bug fixes
 
 -   set ignore_RAM to TRUE for the tests
-
 
 # ebvcube 0.4.0
 

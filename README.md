@@ -6,11 +6,16 @@
 <!-- badges: start -->
 
 [![CRAN
-status](https://www.r-pkg.org/badges/version/ebvcube)](https://CRAN.R-project.org/package=ebvcube)
+status](https://www.r-pkg.org/badges/version/ebvcube)](https://cran.r-project.org/package=ebvcube)
 [![R-CMD-check](https://github.com/EBVCube/ebvcube/actions/workflows/R.yaml/badge.svg?branch=dev)](https://github.com/EBVCube/ebvcube/actions/workflows/R.yaml)
+[![ebvcube status
+badge](https://b-cubed-eu.r-universe.dev/ebvcube/badges/version)](https://b-cubed-eu.r-universe.dev/ebvcube)
+[![name status
+badge](https://b-cubed-eu.r-universe.dev/badges/:name?color=6CDDB4)](https://b-cubed-eu.r-universe.dev/)
 [![codecov](https://codecov.io/gh/EBVcube/ebvcube/graph/badge.svg?token=2TVFHRKBNJ)](https://app.codecov.io/gh/EBVcube/ebvcube)
-![Static
-Badge](https://img.shields.io/badge/DOI-10.32614%2FCRAN.package.ebvcube-blue?link=https%3A%2F%2Fcran.r-project.org%2Fweb%2Fpackages%2Febvcube%2Findex.html)
+[![Static
+Badge](https://img.shields.io/badge/DOI-10.32614%2FCRAN.package.ebvcube-blue?link=https%3A%2F%2Fcran.r-project.org%2Fweb%2Fpackages%2Febvcube%2Findex.html)](https://cran.r-project.org/package=ebvcube)
+
 <!-- badges: end -->
 
 This package can be used to easily access the data of the EBV netCDFs
@@ -69,16 +74,19 @@ datacubes are 4D.
 
 ## 2. Installation
 
-You can install the ebvcube packages with:
+You can install the ebvcube packages from the following sources:
 
 ``` r
-#get the current version on CRAN
+#installation of the current version on CRAN
 install.packages('ebvcube') 
 
-#install the latest version from GitHub
+#installation of the latest development version from GitHub
 devtools::install_github('https://github.com/EBVCube/ebvcube/tree/dev')
 
-#troubleshooting for BioConductor packages
+#installation of the current version on the b3verse (https://b-cubed-eu.r-universe.dev/)
+install.packages("ebvcube", repos = c("https://b-cubed-eu.r-universe.dev", "https://cloud.r-project.org", "https://bioc.r-universe.dev"))
+
+#troubleshooting in case the BioConductor packages are missing
 #if one of the following packages is not loaded: rhdf5, DelayedArray, HDF5Array
 install.packages("BiocManager")
 BiocManager::install('rhdf5')
@@ -101,7 +109,7 @@ The properties encompass much more information!
 
 ``` r
 library(ebvcube)
-#> ebvcube 0.5.1
+#> ebvcube 0.5.2
 
 #set the path to the file
 file <- system.file(file.path("extdata", "martins_comcom_subset.nc"), package="ebvcube")
@@ -243,6 +251,7 @@ ggplot2::ggplot() +
 ```
 
 <img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" />
+
 Imagine you have a very large dataset but only limited memory. The
 package provides the possibility to load the data as a DelayedArray. The
 ebv_write() function helps you to write that data back on disk properly.
@@ -347,7 +356,7 @@ citation('ebvcube')
 #>   Quoss L, Fernandez N, Langer C, Valdez J, Pereira H (2024). _ebvcube:
 #>   Working with netCDF for Essential Biodiversity Variables_. German
 #>   Centre for Integrative Biodiversity Research (iDiv)
-#>   Halle-Jena-Leipzig, Germany. R package version 0.5.1,
+#>   Halle-Jena-Leipzig, Germany. R package version 0.5.2,
 #>   <https://github.com/EBVcube/ebvcube>.
 #> 
 #> A BibTeX entry for LaTeX users is
@@ -356,7 +365,7 @@ citation('ebvcube')
 #>     title = {ebvcube: Working with netCDF for Essential Biodiversity Variables},
 #>     author = {Luise Quoss and Nestor Fernandez and Christian Langer and Jose Valdez and Henrique Miguel Pereira},
 #>     year = {2024},
-#>     note = {R package version 0.5.1},
+#>     note = {R package version 0.5.2},
 #>     organization = {German Centre for Integrative Biodiversity Research (iDiv) Halle-Jena-Leipzig},
 #>     address = {Germany},
 #>     url = {https://github.com/EBVcube/ebvcube},
@@ -374,6 +383,7 @@ citation('ebvcube')
 |  | ebv_read_bb | Read a spatial subset given by a bounding box |
 |  | ebv_read_shp | Read a spatial subset given by a Shapefile |
 |  | ebv_analyse | Get basic measurements of the data |
+|  | ebv_resample | Resample the pixel size and alignment |
 |  | ebv_write | Write manipulated data back to disc |
 | Data visualization | ebv_map | Plot a map of the specified data slice |
 |  | ebv_trend | Plot the temporal trend |

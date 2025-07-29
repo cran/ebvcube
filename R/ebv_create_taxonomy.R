@@ -26,14 +26,20 @@
 #'  column order: "order", "family", "genus", "scientificName", "taxonomy_key".
 #'  The last column (here named "taxonomy_key") should have the exact name of
 #'  the taxonomy key from the authority of the taxonomic backbone. It will be
-#'  added as an additional
-#'  attribute to the netCDF. For example, if your taxonomy is based on the \href{https://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c}{GBIF
-#'  Backbone Taxonomy} the column name could be "usageKey".
+#'  added as an additional attribute to the netCDF. For example, if your
+#'  taxonomy is based on the \href{https://www.gbif.org/dataset/d7dddbf4-2cf0-4f39-9b2a-bb099caae36c}{GBIF
+#'  Backbone Taxonomy} the column name could be "usageKey". For an
+#'  example CSV including the `taxonomy_key` download the 'Entities as CSV'
+#'  from the \href{https://portal.geobon.org/ebv-detail?id=82}{Occurrence
+#'  Metrics for the Birds Directive Annex I Species in EU27 dataset} of the
+#'  portal. For an example without `taxonomy_key`, download
+#'  \href{https://portal.geobon.org/ebv-detail?id=84}{Species habitat
+#'  suitability of European terrestrial vertebrates for contemporary climate
+#'  and land use}.
+#'  To create your netCDF follow the same structure. The column names may be
+#'  different depending on the taxonomy used.
 #'@param taxonomy_key Logical. Default: FALSE. Set to TRUE if the last column in
-#'  your taxonomy csv file defines the taxonomy_key for each entity. For more
-#'  info check
-#'   \href{https://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#taxon-names-and-identifiers}{CF
-#'   convention 1.8: Taxon Names and Identifiers}.
+#'  your taxonomy csv file defines the taxonomy_key for each entity.
 #'@param epsg Integer. Default: 4326 (WGS84). Defines the coordinate reference
 #'  system via the corresponding epsg code.
 #'@param extent Numeric. Default: c(-180,180,-90,90). Defines the extent of the
@@ -232,7 +238,7 @@ ebv_create_taxonomy <- function(jsonpath, outputpath, taxonomy, taxonomy_key=FAL
       #read csv---
       # check if data inside
       tryCatch({
-        csv_txt <- suppressWarnings(utils::read.csv(taxonomy, sep=sep, header=TRUE, fileEncoding="UTF-8"))
+        csv_txt <- suppressWarnings(utils::read.csv(taxonomy, sep=sep, header=TRUE, fileEncoding="UTF-8", row.names = NULL))
       },
       error=function(e){
         if(stringr::str_detect(as.character(e), 'no lines available')){
@@ -312,6 +318,11 @@ ebv_create_taxonomy <- function(jsonpath, outputpath, taxonomy, taxonomy_key=FAL
     taxon_list <- names(csv_txt)
     entities <- csv_txt[, dim_csv[2]]
     taxonomy_key_list <- NA
+  }
+
+  #double-check entities----
+  if(any(is.na(entities))){
+    stop('There is at least one entity-name NA. Please check again that the last (taxonomy_key=FALSE) or the second-last (taxonomy_key=TRUE) column of your CSV holds the entity-names and has no NA value.')
   }
 
   #check taxonomy_key list and entities
@@ -793,14 +804,14 @@ ebv_create_taxonomy <- function(jsonpath, outputpath, taxonomy, taxonomy_key=FAL
     global.att['comment'] <- 'comment'
     global.att['ebv_class']<-'ebv$ebv_class'
     global.att['ebv_name']<-'ebv$ebv_name'
-    global.att['ebv_spatial_scope']<-'ebv_geospatial$ebv_geospatial_scope'
-    global.att['ebv_spatial_description']<-'ebv_geospatial$ebv_geospatial_description'
+    global.att['ebv_geospatial_scope']<-'ebv_geospatial$ebv_geospatial_scope'
+    global.att['ebv_geospatial_description']<-'ebv_geospatial$ebv_geospatial_description'
     global.att['ebv_domain']<-'ebv_domain'
   }
 
   #keywords
   keywords <- paste0('ebv_class: ', json$ebv$ebv_class, ', ebv_name: ', json$ebv$ebv_name,
-                     ', ebv_domain: ', paste0(json$ebv_domain[[1]], collapse=', '), ', ebv_spatial_scope: ',
+                     ', ebv_domain: ', paste0(json$ebv_domain[[1]], collapse=', '), ', ebv_geospatial_scope: ',
                      json$ebv_geospatial$ebv_geospatial_scope, ', ebv_entity_type: ',
                      json$ebv_entity$ebv_entity_type)
 
